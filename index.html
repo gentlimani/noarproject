@@ -99,6 +99,7 @@
         }
         .pulse-marker {
             animation: pulse 2s infinite;
+            transition: opacity 0.5s ease-out;
         }
         .video-container {
             width: 100%;
@@ -114,6 +115,93 @@
             height: 100%;
             border: none;
         }
+        #moon-map-container {
+            overflow: hidden; 
+        }
+        #moon-map-image {
+            transition: transform 1.5s ease-in-out, opacity 0.8s ease-in-out 0.3s;
+            transform-origin: 55% 40%; 
+        }
+        #moon-map-image.zoomed-in {
+            transform: scale(3); 
+        }
+        #sea-of-tranquility-detail {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            border-radius: 50%; 
+            opacity: 0;
+            transition: opacity 0.8s ease-in-out, transform 1.5s ease-in-out;
+            transform-origin: 55% 40%; 
+            transform: scale(1); 
+            pointer-events: none; 
+        }
+        #sea-of-tranquility-detail.visible-zoomed {
+            opacity: 1;
+            transform: scale(3); 
+        }
+        .image-caption {
+            margin-top: 0.75rem; 
+            font-size: 1.125rem; 
+            color: #cbd5e0; 
+            font-weight: 600; 
+        }
+        .carousel-container {
+            width: 100%;
+            max-width: 800px; 
+            margin: 2rem auto;
+            position: relative;
+            overflow: hidden;
+            padding: 1rem 0; 
+        }
+        .carousel-track {
+            display: flex;
+        }
+        .carousel-slide {
+            flex: 0 0 auto; 
+            width: 220px; 
+            margin-right: 1rem; 
+            box-sizing: border-box;
+        }
+        .carousel-slide img {
+            width: 100%;
+            height: 150px; 
+            object-fit: cover;
+            border-radius: 0.75rem;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+            display: block;
+        }
+        .carousel-button {
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+            background-color: rgba(237, 137, 54, 0.9); 
+            color: white;
+            border: none;
+            padding: 0.5rem; 
+            width: 2.5rem; 
+            height: 2.5rem; 
+            border-radius: 50%;
+            cursor: pointer;
+            font-size: 1.25rem;
+            font-weight: bold;
+            z-index: 10;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+            opacity: 0; 
+            transition: opacity 0.3s ease-in-out;
+        }
+        .carousel-container:hover .carousel-button {
+            opacity: 1; 
+        }
+        .carousel-button.prev {
+            left: -10px; 
+        }
+        .carousel-button.next {
+            right: -10px; 
+        }
     </style>
 </head>
 <body class="overflow-x-hidden">
@@ -124,6 +212,7 @@
         <a href="#telescope" title="Teleskopi">🔭</a>
         <a href="#moon" title="Hëna">🌙</a>
         <a href="#apollo" title="Apollo 11">🚀</a>
+        <a href="#noar-adventures" title="Aventurat e Noarit">🖼️</a>
     </nav>
 
     <main>
@@ -207,16 +296,23 @@
             
             <p class="max-w-3xl text-xl md:text-2xl text-gray-300 mt-8 mb-8">Kliko shenjën në hartën e Hënës më poshtë për të parë ku u ulën!</p>
 
-            <div id="moon-map-container" class="w-full max-w-lg aspect-square rounded-full bg-gray-700 relative cursor-pointer" onclick="document.getElementById('landing-site').scrollIntoView({ behavior: 'smooth' });">
-                 <img src="https://placehold.co/800x800/A0A0A0/333333?text=Harta+e+Hënës"
-                      class="w-full h-full rounded-full object-cover"
-                      onerror="this.style.display='none'; document.getElementById('moon-map-container').style.backgroundImage='url(https://placehold.co/800x800/cccccc/ffffff?text=Harta+e+Hënës+Alternative)'; console.error('Imazhi kryesor i hartës së hënës dështoi të ngarkohej.')"
-                      alt="Harta e Hënës që tregon zonën e uljes së Apollo 11"/>
-                <div class="absolute top-[40%] left-[55%]">
-                    <div class="pulse-marker w-10 h-10 rounded-full border-4 border-yellow-300 bg-yellow-300/50 flex items-center justify-center">
-                        <div class="w-2 h-2 rounded-full bg-yellow-100"></div>
+            <div class="w-full max-w-lg text-center">
+                <div id="moon-map-container" class="aspect-square rounded-full bg-gray-700 relative cursor-pointer mx-auto">
+                     <img id="moon-map-image" src="https://images.pexels.com/photos/47367/full-moon-moon-bright-sky-47367.jpeg"
+                          class="w-full h-full rounded-full object-cover"
+                          onerror="this.onerror=null; this.src='https://placehold.co/800x800/cccccc/ffffff?text=Harta+Alternative';"
+                          alt="Harta e Hënës që tregon zonën e uljes së Apollo 11"/>
+                     <img id="sea-of-tranquility-detail" src="https://media.invisioncic.com/g327141/monthly_2018_06/347888625_SabineandRittertheAragoDomesandtheApollo11landingsite.png.be53dcfecf5462798ad2c7b13457e0f9.png"
+                          class="w-full h-full rounded-full object-cover"
+                          onerror="this.onerror=null; this.src='https://placehold.co/800x800/777777/ffffff?text=Detaj+Alternative';"
+                          alt="Pamje e zmadhuar e Detit të Qetësisë"/>
+                    <div id="tranquility-marker-container" class="absolute top-[40%] left-[55%] transform -translate-x-1/2 -translate-y-1/2 cursor-pointer" onclick="zoomToTranquility()">
+                        <div class="pulse-marker w-10 h-10 rounded-full border-4 border-yellow-300 bg-yellow-300/50 flex items-center justify-center">
+                            <div class="w-2 h-2 rounded-full bg-yellow-100"></div>
+                        </div>
                     </div>
                 </div>
+                <p id="moon-map-caption" class="image-caption">Harta e Hënës</p>
             </div>
         </section>
 
@@ -234,9 +330,20 @@
                  </div>
              </div>
         </section>
+        
+        <section id="noar-adventures" class="section bg-gray-900">
+            <h2 class="fun-title mb-8">Aventurat e Noarit në Hapësirë!</h2>
+            <p class="max-w-2xl text-xl md:text-2xl text-gray-300 mb-8">Shikoni disa nga fotot e mrekullueshme të Noarit duke eksploruar me teleskopin e tij dhe fotot që ka bërë!</p>
+            <div class="carousel-container">
+                <div class="carousel-track">
+                    </div>
+                <button class="carousel-button prev" onclick="manualCarouselChange(-1)">❮</button>
+                <button class="carousel-button next" onclick="manualCarouselChange(1)">❯</button>
+            </div>
+        </section>
 
-        <footer class="text-center p-8 bg-gray-900">
-            <h2 class="fun-title text-4xl mb-4">Vazhdo Eksplorimin! 🪐</h2>
+        <footer class="text-center p-8 bg-gray-900 border-t-0"> 
+            <h2 class="fun-title text-4xl mb-4">Faleminderit që Eksploruat! 🚀</h2>
         </footer>
     </main>
     
@@ -262,8 +369,8 @@
                 phaseBtn.addEventListener('click', handleNextMoonPhase);
             }
             
-            // Initialize display with the starting angle
             updateMoonPhaseDisplay(); 
+            initializeCarousel();
         });
         
         const lightFacts = {
@@ -303,8 +410,8 @@
             ray2.style.opacity = '0';
             ray2.style.transform = 'rotate(0deg)';
 
-            void ray1.offsetWidth; // Force reflow
-            void ray2.offsetWidth; // Force reflow
+            void ray1.offsetWidth; 
+            void ray2.offsetWidth; 
 
             const widthToObjective = '20%'; 
             setTimeout(() => {
@@ -350,7 +457,6 @@
         
         let currentVisualOrbitAngle = moonPhasesData[moonPhaseIndex].angle;
 
-
         function updateMoonPhaseDisplay() {
             const phase = moonPhasesData[moonPhaseIndex];
             const moonPhaseDisplayEl = document.getElementById('moon-phase-display');
@@ -381,7 +487,131 @@
             updateMoonPhaseDisplay();
         }
 
+        function zoomToTranquility() {
+            const moonMapImage = document.getElementById('moon-map-image');
+            const detailImage = document.getElementById('sea-of-tranquility-detail');
+            const markerContainer = document.getElementById('tranquility-marker-container');
+            const landingSiteSection = document.getElementById('landing-site');
+            const captionElement = document.getElementById('moon-map-caption');
+
+            if (moonMapImage && detailImage && markerContainer && landingSiteSection && captionElement) {
+                const originX = '55%'; 
+                const originY = '40%';
+                moonMapImage.style.transformOrigin = `${originX} ${originY}`;
+                detailImage.style.transformOrigin = `${originX} ${originY}`;
+                
+                moonMapImage.classList.add('zoomed-in');
+                markerContainer.style.opacity = '0';
+                if(captionElement) captionElement.textContent = 'Deti i Qetësisë (Pamje e Zmadhuar)';
+
+
+                setTimeout(() => {
+                    moonMapImage.style.opacity = '0';
+                    detailImage.classList.add('visible-zoomed');
+                }, 300); 
+
+                setTimeout(() => {
+                    landingSiteSection.scrollIntoView({ behavior: 'smooth' });
+                }, 2500); 
+
+                setTimeout(() => {
+                    moonMapImage.classList.remove('zoomed-in');
+                    moonMapImage.style.opacity = '1';
+                    detailImage.classList.remove('visible-zoomed');
+                    markerContainer.style.opacity = '1';
+                    if(captionElement) captionElement.textContent = 'Harta e Hënës';
+                }, 4000); 
+            }
+        }
+
+        const carouselTrack = document.querySelector('.carousel-track');
+        const carouselContainer = document.querySelector('.carousel-container');
+        const placeholderImageSources = [
+            "https://placehold.co/440x300/334155/fde047?text=Noari+me+Teleskop",
+            "https://placehold.co/440x300/475569/facc15?text=Hëna+nga+Noari+1",
+            "https://placehold.co/440x300/52525b/eab308?text=Noari+Vëzhgues",
+            "https://placehold.co/440x300/1e293b/f59e0b?text=Hëna+nga+Noari+2",
+            "https://placehold.co/440x300/0f172a/e2e8f0?text=Noari+dhe+Kozmosi"
+        ];
+        const slideWidth = 220; 
+        const slideMargin = 16; 
+        const totalSlideWidth = slideWidth + slideMargin;
+        let currentTrackPosition = 0;
+        let scrollSpeed = 0.5; 
+        let isCarouselPaused = false;
+        let carouselAnimFrameId;
+
+        function populateCarousel() {
+            if (!carouselTrack) return;
+            const allImages = [...placeholderImageSources, ...placeholderImageSources]; 
+            allImages.forEach(src => {
+                const slideDiv = document.createElement('div');
+                slideDiv.classList.add('carousel-slide');
+                const img = document.createElement('img');
+                img.src = src;
+                img.alt = "Imazh nga aventurat e Noarit"; 
+                slideDiv.appendChild(img);
+                carouselTrack.appendChild(slideDiv);
+            });
+            carouselTrack.style.width = `${totalSlideWidth * allImages.length}px`;
+        }
+
+        function autoScrollCarousel() {
+            if (!isCarouselPaused && carouselTrack) {
+                currentTrackPosition -= scrollSpeed;
+                if (currentTrackPosition <= -(totalSlideWidth * placeholderImageSources.length)) {
+                    currentTrackPosition = 0;
+                }
+                carouselTrack.style.transform = `translateX(${currentTrackPosition}px)`;
+            }
+            carouselAnimFrameId = requestAnimationFrame(autoScrollCarousel);
+        }
+        
+        function manualCarouselChange(direction) {
+            if (!carouselTrack) return;
+            const numOriginalSlides = placeholderImageSources.length;
+            let currentEffectiveIndex = Math.round(-currentTrackPosition / totalSlideWidth);
+
+            currentEffectiveIndex += direction;
+            
+            if (direction === 1 && currentTrackPosition - totalSlideWidth <= -(totalSlideWidth * numOriginalSlides * 2) + totalSlideWidth) {
+                currentTrackPosition = -(currentEffectiveIndex % numOriginalSlides) * totalSlideWidth;
+            } else if (direction === -1 && currentTrackPosition + totalSlideWidth > 0) {
+                 currentTrackPosition = -((currentEffectiveIndex % numOriginalSlides) + numOriginalSlides) * totalSlideWidth;
+            } else {
+                 currentTrackPosition -= direction * totalSlideWidth;
+            }
+
+            const maxTranslate = totalSlideWidth * numOriginalSlides;
+            if (Math.abs(currentTrackPosition) >= maxTranslate) {
+                currentTrackPosition = currentTrackPosition % maxTranslate;
+                 if (direction === 1 && currentTrackPosition === 0) {
+                 } else if (direction === -1 && currentTrackPosition !== 0) {
+                    currentTrackPosition -= maxTranslate;
+                 }
+            }
+
+            carouselTrack.style.transition = 'transform 0.5s ease-in-out'; 
+            carouselTrack.style.transform = `translateX(${currentTrackPosition}px)`;
+            
+            setTimeout(() => {
+                if (carouselTrack) carouselTrack.style.transition = 'none';
+            }, 500);
+        }
+
+        function initializeCarousel() {
+            populateCarousel();
+            if (carouselContainer && carouselTrack) {
+                carouselContainer.addEventListener('mouseenter', () => {
+                    isCarouselPaused = true;
+                });
+                carouselContainer.addEventListener('mouseleave', () => {
+                    isCarouselPaused = false;
+                });
+                autoScrollCarousel(); 
+            }
+        }
+
     </script>
 </body>
 </html>
-
