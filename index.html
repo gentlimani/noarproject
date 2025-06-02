@@ -74,25 +74,32 @@
             transform: scale(1.05);
             box-shadow: 0 0 20px #f6e05e;
         }
-        .telescope-light-ray {
-            position: absolute;
-            background-color: #f6e05e;
-            height: 4px;
-            border-radius: 2px;
-            transform-origin: left center;
-            transition: width 1s ease-in-out, opacity 1s ease-in-out, transform 1s ease-in-out;
-            opacity: 0;
-            width: 0;
+        
+        #telescope-canvas-container {
+            width: 100%;
+            max-width: 700px; 
+            height: 350px; /* Adjusted height */
+            background-color: #0a0f1a; 
+            border-radius: 1rem;
+            margin-bottom: 1rem;
+            position: relative; 
         }
-        .lens { 
-            background-color: #60a5fa;
-            border-radius: 50%;
-            opacity: 0.6;
-            box-shadow: 0 0 10px #60a5fa;
-            position: absolute;
-            top: 50%;
-            transform: translateY(-50%);
+        #telescopeCanvas { /* Renamed from telescope-canvas */
+            display: block; 
+            width: 100%;
+            height: 100%;
+            border-radius: 1rem; 
         }
+         .label { /* From user's provided code */
+            position: absolute;
+            color: #fff;
+            font-size: 14px;
+            pointer-events: none;
+            opacity: 0; /* Initially hidden, controlled by JS */
+            transition: opacity 0.5s ease-in-out;
+        }
+
+
         @keyframes pulse {
             0%, 100% { transform: scale(1); }
             50% { transform: scale(1.1); }
@@ -146,7 +153,7 @@
         }
         .carousel-container {
             width: 100%;
-            max-width: 1000px; 
+            max-width: 1250px; 
             margin: 2rem auto;
             position: relative;
             overflow: hidden;
@@ -157,13 +164,13 @@
         }
         .carousel-slide {
             flex: 0 0 auto; 
-            width: 400px; 
+            width: 500px; 
             margin-right: 1rem; 
             box-sizing: border-box;
         }
         .carousel-slide img {
             width: 100%;
-            height: 250px; 
+            height: 310px; 
             object-fit: cover;
             border-radius: 0.75rem;
             box-shadow: 0 5px 15px rgba(0,0,0,0.2);
@@ -246,18 +253,11 @@
         <section id="telescope" class="section">
             <h2 class="fun-title mb-4">Sy Super të Fuqishëm!</h2>
             <p class="max-w-2xl text-xl md:text-2xl text-gray-300 mb-8">Teleskopët përdorin THJERRËZA për të përthyer dritën dhe për t'i bërë gjërat e largëta të duken më të mëdha. Shtyp butonin për të parë se si!</p>
-            <div class="w-full max-w-3xl h-64 md:h-80 bg-gray-900 rounded-2xl flex items-center relative overflow-hidden p-4 shadow-2xl">
-                <div id="telescope-star-source" class="text-5xl md:text-6xl z-20 absolute left-4 md:left-8 top-1/2 -translate-y-1/2">⭐</div>
-                
-                <div id="objective-lens" class="lens w-5 md:w-6 h-32 md:h-40 left-[30%] md:left-[35%] z-10"></div>
-                <div id="eyepiece-lens" class="lens w-3 md:w-4 h-20 md:h-24 left-[65%] md:left-[70%] z-10"></div>
-
-                <div id="ray1_path" class="telescope-light-ray" style="top: calc(50% - 10px); left: 12%; md:left: 15%;"></div>
-                <div id="ray2_path" class="telescope-light-ray" style="top: calc(50% + 6px); left: 12%; md:left: 15%;"></div>
-                
-                <div id="magnified-star" class="text-8xl md:text-9xl opacity-0 z-20 absolute right-4 md:right-8 top-1/2 -translate-y-1/2">⭐</div>
+            <div id="telescope-canvas-container">
+                <canvas id="telescopeCanvas"></canvas>
+                <div class="label" id="focalLabel">Pika Fokale</div>
             </div>
-            <button id="telescope-btn" class="fun-button mt-8">Shiko si funksionon!</button>
+            <button id="telescope-canvas-btn" class="fun-button mt-4">Shiko si funksionon!</button>
         </section>
 
         <section id="moon" class="section">
@@ -355,10 +355,12 @@
                 });
             });
 
-            const telescopeBtn = document.getElementById('telescope-btn');
-            if (telescopeBtn) {
-                telescopeBtn.addEventListener('click', animateTelescope);
+            const telescopeCanvasBtn = document.getElementById('telescope-canvas-btn');
+            if (telescopeCanvasBtn) {
+                telescopeCanvasBtn.addEventListener('click', startCanvasTelescopeAnimation);
             }
+            initializeCanvasTelescope();
+
 
             const phaseBtn = document.getElementById('phase-btn');
             if (phaseBtn) {
@@ -387,62 +389,180 @@
             }
         }
 
-        function animateTelescope() { 
-            const ray1 = document.getElementById('ray1_path');
-            const ray2 = document.getElementById('ray2_path');
-            const magnifiedStar = document.getElementById('magnified-star');
+        // Canvas Telescope Animation
+        let canvas, ctx, focalLabelElement;
+        let canvasAnimationProgress = 0;
+        let canvasAnimFrameId;
+        
+        // Define coordinates as percentages of canvas width/height for responsiveness
+        const canvasStar = { xPercent: 0.1, yPercent: 0.5, radiusPercent: 0.03 }; // Star radius relative to canvas height
+        const objectiveLens = { xPercent: 0.35, yPercent: 0.5, widthPercent: 0.03, heightPercent: 0.6 };
+        const focalPoint = { xPercent: 0.6, yPercent: 0.5 };
+        const eyepieceLens = { xPercent: 0.7, yPercent: 0.5, widthPercent: 0.02, heightPercent: 0.4 };
+        const magnifiedStar = { xPercent: 0.9, yPercent: 0.5, initialRadiusPercent: 0.03, magnifiedRadiusPercent: 0.09 };
 
-            if (!ray1 || !ray2 || !magnifiedStar) {
-                console.error("Elementë të animacionit të teleskopit mungojnë!");
+        const rayInitialOffsetYPercent = 0.06; // Offset from star center for parallel rays, relative to canvas height
+        const rayDivergeOffsetYPercent = 0.12; // How much diverging rays spread, relative to canvas height
+
+        function initializeCanvasTelescope() {
+            canvas = document.getElementById("telescopeCanvas");
+            focalLabelElement = document.getElementById("focalLabel");
+            if (!canvas || !focalLabelElement) {
+                console.error("Canvas or focal label element not found for telescope animation.");
                 return;
             }
-
-            ray1.style.transition = 'none';
-            ray2.style.transition = 'none';
-            magnifiedStar.style.opacity = '0';
-            magnifiedStar.style.transform = 'scale(1) translateY(-50%)'; 
+            ctx = canvas.getContext("2d");
             
-            ray1.style.width = '0';
-            ray1.style.opacity = '0';
-            ray1.style.transform = 'rotate(0deg)';
-            
-            ray2.style.width = '0';
-            ray2.style.opacity = '0';
-            ray2.style.transform = 'rotate(0deg)';
+            const container = document.getElementById('telescope-canvas-container');
+            canvas.width = container.clientWidth;
+            canvas.height = container.clientHeight;
 
-            void ray1.offsetWidth; 
-            void ray2.offsetWidth; 
+            // Position focal label (will be made visible during animation)
+            focalLabelElement.style.left = `${focalPoint.xPercent * canvas.width - 25}px`; // Adjust offset as needed
+            focalLabelElement.style.top = `${focalPoint.yPercent * canvas.height + 10}px`; // Adjust offset as needed
 
-            const widthToObjective = '20%'; 
-            setTimeout(() => {
-                ray1.style.transition = 'width 0.7s ease-in-out, opacity 0.7s ease-in-out';
-                ray2.style.transition = 'width 0.7s ease-in-out, opacity 0.7s ease-in-out';
-                ray1.style.opacity = '1';
-                ray2.style.opacity = '1';
-                ray1.style.width = widthToObjective; 
-                ray2.style.width = widthToObjective;
-            }, 100);
-
-            const widthToEyepieceFocal = '53%';
-            const convergenceAngle = '6deg'; 
-
-            setTimeout(() => {
-                ray1.style.transition = 'width 1s ease-in-out, transform 1s ease-in-out, opacity 0.5s 0.5s ease-out';
-                ray2.style.transition = 'width 1s ease-in-out, transform 1s ease-in-out, opacity 0.5s 0.5s ease-out';
-                ray1.style.transform = `rotate(${convergenceAngle})`; 
-                ray2.style.transform = `rotate(-${convergenceAngle})`; 
-                ray1.style.width = widthToEyepieceFocal; 
-                ray2.style.width = widthToEyepieceFocal;
-            }, 800); 
-
-            setTimeout(() => {
-                magnifiedStar.style.transition = 'opacity 0.5s ease-in-out, transform 0.5s ease-in-out';
-                magnifiedStar.style.opacity = '1';
-                magnifiedStar.style.transform = 'scale(2.0) translateY(-50%)'; 
-                ray1.style.opacity = '0.1'; 
-                ray2.style.opacity = '0.1';
-            }, 1800); 
+            drawStaticCanvasElements(); // Draw initial state
         }
+
+        function drawStaticCanvasElements() {
+            if (!ctx || !canvas) return;
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            // Star
+            ctx.fillStyle = "#FFD700"; // Gold for star
+            ctx.beginPath();
+            ctx.arc(canvasStar.xPercent * canvas.width, canvasStar.yPercent * canvas.height, canvasStar.radiusPercent * canvas.height, 0, Math.PI * 2);
+            ctx.fill();
+
+            // Lenses
+            ctx.fillStyle = "rgba(100, 150, 255, 0.5)"; // Light blue, semi-transparent
+            ctx.beginPath(); // Objective Lens
+            ctx.ellipse(objectiveLens.xPercent * canvas.width, objectiveLens.yPercent * canvas.height, 
+                        objectiveLens.widthPercent * canvas.width, objectiveLens.heightPercent * canvas.height / 2, 
+                        0, 0, Math.PI * 2);
+            ctx.fill();
+
+            ctx.beginPath(); // Eyepiece Lens
+            ctx.ellipse(eyepieceLens.xPercent * canvas.width, eyepieceLens.yPercent * canvas.height, 
+                        eyepieceLens.widthPercent * canvas.width, eyepieceLens.heightPercent * canvas.height / 2, 
+                        0, 0, Math.PI * 2);
+            ctx.fill();
+        }
+        
+        function drawAnimatedCanvasElements(progress) {
+            if (!ctx || !canvas) return;
+            drawStaticCanvasElements(); // Redraw static parts
+            
+            ctx.strokeStyle = "#f6e05e"; // Light ray color
+            ctx.lineWidth = 2;
+
+            const starX = canvasStar.xPercent * canvas.width;
+            const starY = canvasStar.yPercent * canvas.height;
+            const objLensX = objectiveLens.xPercent * canvas.width;
+            const focalX = focalPoint.xPercent * canvas.width;
+            const focalY = focalPoint.yPercent * canvas.height;
+            const eyepieceX = eyepieceLens.xPercent * canvas.width;
+            const magnifiedStarX = magnifiedStar.xPercent * canvas.width;
+
+            const rayY1Initial = starY - rayInitialOffsetYPercent * canvas.height;
+            const rayY2Initial = starY + rayInitialOffsetYPercent * canvas.height;
+
+            // Phase 1: Parallel rays to objective lens
+            const phase1EndTime = objLensX - starX;
+            let currentLenPhase1 = Math.min(progress, phase1EndTime);
+            
+            ctx.beginPath();
+            ctx.moveTo(starX, rayY1Initial);
+            ctx.lineTo(starX + currentLenPhase1, rayY1Initial);
+            ctx.stroke();
+
+            ctx.beginPath();
+            ctx.moveTo(starX, rayY2Initial);
+            ctx.lineTo(starX + currentLenPhase1, rayY2Initial);
+            ctx.stroke();
+
+            // Phase 2: Converging rays from objective lens to focal point
+            if (progress > phase1EndTime) {
+                focalLabelElement.style.opacity = '0'; // Hide initially
+                const phase2Progress = progress - phase1EndTime;
+                const phase2MaxLen = focalX - objLensX;
+                const currentLenPhase2 = Math.min(phase2Progress, phase2MaxLen);
+                const factor = Math.min(phase2Progress / phase2MaxLen, 1);
+
+                ctx.beginPath();
+                ctx.moveTo(objLensX, rayY1Initial);
+                ctx.lineTo(objLensX + currentLenPhase2 * Math.cos(Math.atan2(focalY - rayY1Initial, focalX - objLensX)), 
+                           rayY1Initial + currentLenPhase2 * Math.sin(Math.atan2(focalY - rayY1Initial, focalX - objLensX)));
+                ctx.stroke();
+
+                ctx.beginPath();
+                ctx.moveTo(objLensX, rayY2Initial);
+                ctx.lineTo(objLensX + currentLenPhase2 * Math.cos(Math.atan2(focalY - rayY2Initial, focalX - objLensX)), 
+                           rayY2Initial + currentLenPhase2 * Math.sin(Math.atan2(focalY - rayY2Initial, focalX - objLensX)));
+                ctx.stroke();
+                
+                if (factor >= 0.95) { // Show focal point label when rays almost meet
+                   focalLabelElement.style.opacity = '1';
+                }
+            }
+
+            // Phase 3: Diverging rays from focal point through eyepiece
+            const phase2EndTime = phase1EndTime + (focalX - objLensX);
+            if (progress > phase2EndTime) {
+                const phase3Progress = progress - phase2EndTime;
+                const phase3MaxLen = magnifiedStarX - focalX; // Rays extend to magnified star position
+                const currentLenPhase3 = Math.min(phase3Progress, phase3MaxLen);
+
+                const outY1 = focalY - rayDivergeOffsetYPercent * canvas.height * (currentLenPhase3 / phase3MaxLen); // Spread increases with progress
+                const outY2 = focalY + rayDivergeOffsetYPercent * canvas.height * (currentLenPhase3 / phase3MaxLen);
+
+                ctx.beginPath();
+                ctx.moveTo(focalX, focalY);
+                ctx.lineTo(focalX + currentLenPhase3 * Math.cos(Math.atan2(outY1 - focalY, magnifiedStarX - focalX)), 
+                           focalY + currentLenPhase3 * Math.sin(Math.atan2(outY1 - focalY, magnifiedStarX - focalX)));
+                ctx.stroke();
+
+                ctx.beginPath();
+                ctx.moveTo(focalX, focalY);
+                ctx.lineTo(focalX + currentLenPhase3 * Math.cos(Math.atan2(outY2 - focalY, magnifiedStarX - focalX)), 
+                           focalY + currentLenPhase3 * Math.sin(Math.atan2(outY2 - focalY, magnifiedStarX - focalX)));
+                ctx.stroke();
+
+                // Draw magnified star
+                const magnifiedProgress = Math.min(phase3Progress / (magnifiedStarX - eyepieceX), 1); // Progress for star appearance
+                if (magnifiedProgress > 0.1) { // Start showing a bit after rays pass eyepiece
+                    const currentRadius = magnifiedStar.initialRadiusPercent * canvas.height + 
+                                       (magnifiedStar.magnifiedRadiusPercent - magnifiedStar.initialRadiusPercent) * canvas.height * Math.min(magnifiedProgress / 0.9, 1) ; // Scale up
+                    ctx.fillStyle = "#FFD700";
+                    ctx.beginPath();
+                    ctx.arc(magnifiedStarX, magnifiedStar.yPercent * canvas.height, currentRadius, 0, Math.PI * 2);
+                    ctx.fill();
+                }
+            }
+        }
+        
+        function startCanvasTelescopeAnimationLoop() {
+            if (!ctx || !canvas) return;
+            drawAnimatedCanvasElements(canvasAnimationProgress);
+            
+            const totalAnimationDistance = magnifiedStar.xPercent * canvas.width; // Full width of animation
+            if (canvasAnimationProgress < totalAnimationDistance) {
+                canvasAnimationProgress += 4; // Animation speed
+                canvasAnimFrameId = requestAnimationFrame(startCanvasTelescopeAnimationLoop);
+            } else {
+                focalLabelElement.style.opacity = '0'; // Hide focal label at the end
+            }
+        }
+
+        function startCanvasTelescopeAnimation() {
+            if (canvasAnimFrameId) {
+                cancelAnimationFrame(canvasAnimFrameId);
+            }
+            canvasAnimationProgress = 0;
+            focalLabelElement.style.opacity = '0';
+            startCanvasTelescopeAnimationLoop();
+        }
+
 
         let moonPhaseIndex = 0; 
         const moonPhasesData = [
@@ -534,11 +654,11 @@
             "images/noari_telescope3.webp",
             "images/noari_space.webp" 
         ];
-        const slideWidth = 400; 
+        const slideWidth = 500; 
         const slideMargin = 16; 
         const totalSlideWidth = slideWidth + slideMargin;
         let currentTrackPosition = 0;
-        let scrollSpeed = 0.5; 
+        let scrollSpeed = 0.8; 
         let isCarouselPaused = false;
         let carouselAnimFrameId;
 
@@ -651,9 +771,9 @@
 
         function onPlayerStateChange(event) {
             if (event.data == YT.PlayerState.ENDED) {
-                const moonMapElement = document.getElementById('moon-map-container'); // Target the map container
+                const moonMapElement = document.getElementById('moon-map-container'); 
                 if (moonMapElement) {
-                    moonMapElement.scrollIntoView({ behavior: 'smooth', block: 'center' }); // Scroll map to center
+                    moonMapElement.scrollIntoView({ behavior: 'smooth', block: 'center' }); 
                 }
             }
         }
