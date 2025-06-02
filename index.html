@@ -151,7 +151,7 @@
         }
         .carousel-container {
             width: 100%;
-            max-width: 960px; 
+            max-width: 1000px; 
             margin: 2rem auto;
             position: relative;
             overflow: hidden;
@@ -162,13 +162,13 @@
         }
         .carousel-slide {
             flex: 0 0 auto; 
-            width: 320px; 
+            width: 400px; 
             margin-right: 1rem; 
             box-sizing: border-box;
         }
         .carousel-slide img {
             width: 100%;
-            height: 200px; 
+            height: 250px; 
             object-fit: cover;
             border-radius: 0.75rem;
             box-shadow: 0 5px 15px rgba(0,0,0,0.2);
@@ -532,12 +532,13 @@
         const carouselTrack = document.querySelector('.carousel-track');
         const carouselContainer = document.querySelector('.carousel-container');
         const placeholderImageSources = [
-            "images/noari_telescope1.jpeg",
-            "images/noari_telescope2.jpeg",
-            "images/hena_noari.jpeg",
-            "images/noari_telescope3.jpeg"
+            "images/noari_telescope1.webp",
+            "images/noari_telescope2.webp",
+            "images/noari_hena.webp",
+            "images/noari_telescope3.webp",
+            "images/noari_space.webp" // Using 5 images as per previous setup
         ];
-        const slideWidth = 320; 
+        const slideWidth = 400; 
         const slideMargin = 16; 
         const totalSlideWidth = slideWidth + slideMargin;
         let currentTrackPosition = 0;
@@ -547,6 +548,7 @@
 
         function populateCarousel() {
             if (!carouselTrack) return;
+            carouselTrack.innerHTML = ''; 
             const allImages = [...placeholderImageSources, ...placeholderImageSources]; 
             allImages.forEach(src => {
                 const slideDiv = document.createElement('div');
@@ -554,6 +556,7 @@
                 const img = document.createElement('img');
                 img.src = src;
                 img.alt = "Imazh nga aventurat e Noarit"; 
+                img.onerror = function() { this.onerror=null; this.src='https://placehold.co/800x500/777777/ffffff?text=Problem+me+Imazhin'; };
                 slideDiv.appendChild(img);
                 carouselTrack.appendChild(slideDiv);
             });
@@ -563,16 +566,12 @@
         function autoScrollCarousel() {
             if (!isCarouselPaused && carouselTrack) {
                 currentTrackPosition -= scrollSpeed;
-                // Check if scrolled past the first set of original images
                 if (currentTrackPosition <= -(totalSlideWidth * placeholderImageSources.length)) {
-                    currentTrackPosition += (totalSlideWidth * placeholderImageSources.length); // Jump back smoothly
-                    // To avoid transition on jump, temporarily remove it
-                    carouselTrack.style.transition = 'none';
+                    carouselTrack.style.transition = 'none'; 
+                    currentTrackPosition += (totalSlideWidth * placeholderImageSources.length);
                     carouselTrack.style.transform = `translateX(${currentTrackPosition}px)`;
-                    // Force reflow to apply the jump immediately
                     void carouselTrack.offsetWidth; 
-                    // Restore transition for next scroll steps
-                    carouselTrack.style.transition = 'transform 0.5s ease-in-out'; // Or remove if scrollSpeed is very low
+                    carouselTrack.style.transition = ''; 
                 } else {
                     carouselTrack.style.transform = `translateX(${currentTrackPosition}px)`;
                 }
@@ -586,26 +585,17 @@
             cancelAnimationFrame(carouselAnimFrameId);
 
             const numOriginalSlides = placeholderImageSources.length;
+            let currentEffectiveIndex = Math.floor(Math.abs(currentTrackPosition) / totalSlideWidth);
             
-            // Calculate current logical slide index based on currentTrackPosition
-            // This needs to be robust if currentTrackPosition isn't perfectly aligned.
-            // For simplicity, let's assume we are mostly aligned or it's okay to snap.
-            let currentLogicalSlide = Math.round(-currentTrackPosition / totalSlideWidth);
+            currentEffectiveIndex += direction;
+            currentTrackPosition = -(currentEffectiveIndex * totalSlideWidth);
 
-            let targetLogicalSlide = currentLogicalSlide + direction;
-
-            // Update currentTrackPosition to the start of the target slide
-            // This helps in snapping and making sure the auto-scroll can resume reasonably.
-            currentTrackPosition = -(targetLogicalSlide * totalSlideWidth);
-
-            // Handle looping: If after manual change, we are outside the "first set" bounds,
-            // adjust currentTrackPosition to be within the duplicated set that maps to the first set.
-            const totalWidthOfOriginalSet = totalSlideWidth * numOriginalSlides;
-            if (currentTrackPosition < -totalWidthOfOriginalSet) { // Scrolled too far left (beyond duplicates)
-                currentTrackPosition = currentTrackPosition % totalWidthOfOriginalSet;
-            } else if (currentTrackPosition > 0) { // Scrolled too far right (into negative of duplicates)
-                currentTrackPosition = (currentTrackPosition % totalWidthOfOriginalSet) - totalWidthOfOriginalSet;
-                if (currentTrackPosition === 0 && direction === -1) currentTrackPosition = -totalWidthOfOriginalSet + totalSlideWidth; // special case for prev from first
+            const totalOriginalSetWidth = totalSlideWidth * numOriginalSlides;
+            if (currentTrackPosition < -totalOriginalSetWidth) { 
+                currentTrackPosition += totalOriginalSetWidth; 
+            } else if (currentTrackPosition > 0) { 
+                currentTrackPosition -= totalOriginalSetWidth; 
+                if (currentTrackPosition === 0 && direction === -1) currentTrackPosition = -totalOriginalSetWidth + totalSlideWidth;
             }
             
             carouselTrack.style.transition = 'transform 0.5s ease-in-out'; 
@@ -629,10 +619,10 @@
                 });
                 carouselContainer.addEventListener('mouseleave', () => {
                     isCarouselPaused = false;
-                    // Ensure transition is off for auto-scroll before starting
-                    if (carouselTrack) carouselTrack.style.transition = 'none';
+                    if (carouselTrack) carouselTrack.style.transition = 'none'; 
                     autoScrollCarousel(); 
                 });
+                if (carouselTrack) carouselTrack.style.transition = 'none'; 
                 autoScrollCarousel(); 
             }
         }
