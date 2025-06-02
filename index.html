@@ -110,11 +110,6 @@
             overflow: hidden;
             box-shadow: 0 10px 20px rgba(0,0,0,0.3);
         }
-        .video-container iframe {
-            width: 100%;
-            height: 100%;
-            border: none;
-        }
         #moon-map-container {
             overflow: hidden; 
         }
@@ -290,8 +285,8 @@
             <h2 class="fun-title mb-4">Një Hap Gjigant!</h2>
             <p class="max-w-3xl text-xl md:text-2xl text-gray-300 mb-8">A e dije që njerëzit kanë ECUR në Hënë? Misioni Apollo 11 ishte hera e parë që njerëzit vizituan një botë tjetër.</p>
             
-            <div class="video-container">
-                <iframe src="https://www.youtube.com/embed/wFh2j2pE_dI" title="Apollo 11 Launch - Original NASA Footage" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+            <div id="video-player-container" class="video-container">
+                <div id="apollo-video-player"></div>
             </div>
             
             <p class="max-w-3xl text-xl md:text-2xl text-gray-300 mt-8 mb-8">Kliko shenjën në hartën e Hënës më poshtë për të parë ku u ulën!</p>
@@ -347,6 +342,7 @@
         </footer>
     </main>
     
+    <script async src="https://www.youtube.com/iframe_api"></script>
     <script>
         document.addEventListener('DOMContentLoaded', () => {
             document.querySelectorAll('a[href^="#"]').forEach(anchor => {
@@ -536,7 +532,7 @@
             "images/noari_telescope2.webp",
             "images/noari_hena.webp",
             "images/noari_telescope3.webp",
-            "images/noari_space.webp" // Using 5 images as per previous setup
+            "images/noari_space.webp" 
         ];
         const slideWidth = 400; 
         const slideMargin = 16; 
@@ -556,7 +552,7 @@
                 const img = document.createElement('img');
                 img.src = src;
                 img.alt = "Imazh nga aventurat e Noarit"; 
-                img.onerror = function() { this.onerror=null; this.src='https://placehold.co/800x500/777777/ffffff?text=Problem+me+Imazhin'; };
+                img.onerror = function() { this.onerror=null; this.src='https://placehold.co/800x500/777777/ffffff?text=Problem+me+Imazhin+(webp)'; };
                 slideDiv.appendChild(img);
                 carouselTrack.appendChild(slideDiv);
             });
@@ -626,6 +622,71 @@
                 autoScrollCarousel(); 
             }
         }
+
+        // YouTube Player API
+        let apolloVideoPlayer;
+        const videoId = 'g5aPoRtF2vw'; 
+
+        function onYouTubeIframeAPIReady() {
+            apolloVideoPlayer = new YT.Player('apollo-video-player', {
+                height: '100%',
+                width: '100%',
+                videoId: videoId,
+                playerVars: {
+                    'playsinline': 1,
+                    'modestbranding': 1,
+                    'rel': 0,
+                    'controls': 0 
+                },
+                events: {
+                    'onReady': onPlayerReady,
+                    'onStateChange': onPlayerStateChange 
+                }
+            });
+        }
+
+        function onPlayerReady(event) {
+            setupVideoObserver();
+        }
+
+        function onPlayerStateChange(event) {
+            if (event.data == YT.PlayerState.ENDED) {
+                const moonMapElement = document.getElementById('moon-map-container'); // Target the map container
+                if (moonMapElement) {
+                    moonMapElement.scrollIntoView({ behavior: 'smooth', block: 'center' }); // Scroll map to center
+                }
+            }
+        }
+
+        function setupVideoObserver() {
+            const videoContainer = document.getElementById('video-player-container');
+            if (!videoContainer || !apolloVideoPlayer) return;
+
+            const observerOptions = {
+                root: null, 
+                rootMargin: '0px',
+                threshold: 0.5 
+            };
+
+            const observerCallback = (entries, observer) => {
+                entries.forEach(entry => {
+                    if (typeof apolloVideoPlayer.playVideo !== 'function' || typeof apolloVideoPlayer.pauseVideo !== 'function') {
+                        return;
+                    }
+                    if (entry.isIntersecting) {
+                        apolloVideoPlayer.playVideo();
+                    } else {
+                        if (apolloVideoPlayer.getPlayerState && apolloVideoPlayer.getPlayerState() === YT.PlayerState.PLAYING) {
+                            apolloVideoPlayer.pauseVideo();
+                        }
+                    }
+                });
+            };
+
+            const videoObserver = new IntersectionObserver(observerCallback, observerOptions);
+            videoObserver.observe(videoContainer);
+        }
+
     </script>
 </body>
 </html>
