@@ -5,41 +5,58 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Drita, Teleskopët dhe Hëna Jonë e Mrekullueshme!</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Chosen Palette: Cosmic Neutrals (Dark space blue/purple, bright yellow, orange, and light blue accents) -->
+    <!-- Application Structure Plan: A single-page, vertical storytelling format. Users scroll through 'chapters' about light, telescopes, the moon, and Apollo 11. A sticky icon-based side-nav allows jumping between sections. This structure is more exploratory and engaging for children than a linear slide-by-slide presentation, turning learning into a guided discovery. Added a final auto-scrolling horizontal image carousel with hover controls. YouTube video now autoplays on scroll with controls hidden and scrolls to moon map on completion. -->
+    <!-- Visualization & Content Choices: Replaced static presentation ideas with interactive HTML/CSS diagrams. Telescope: Canvas 2D animation showing light path through two lenses, with parallel, converging, and diverging rays meeting at a focal point, with labels. Animation resets to initial state after completion for replay. Moon Phases: Interactive diagram with a button to cycle through phases, updating a Unicode emoji display. Apollo 11: A 'click to zoom' interaction on a moon map that fades to a detail image, changes caption, then scrolls to a detail section. YouTube video uses Iframe API and Intersection Observer for autoplay with hidden controls and auto-scroll to moon map on end. Image Carousel: JS for horizontal continuous auto-scrolling slides with hover pause and manual navigation. These choices prioritize direct manipulation and visual feedback over passive viewing. All visuals are built with HTML/CSS/Unicode, no Chart.js needed for this specific design. -->
+    <!-- CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. -->
     <style>
         body {
             font-family: 'Comic Sans MS', 'Chalkboard SE', 'Marker Felt', sans-serif;
-            background-color: #1a202c;
-            color: #f7fafc;
+            background-color: #1a202c; /* Tailwind gray-900 */
+            color: #f7fafc; /* Tailwind gray-100 */
+            line-height: 1.6;
         }
         .section {
             min-height: 100vh;
-            padding: 4rem 1rem;
+            padding: 2rem 1rem sm:p-8 md:p-16; /* Responsive padding */
             display: flex;
             flex-direction: column;
             justify-content: center;
             align-items: center;
             text-align: center;
-            border-bottom: 2px dashed #4a5568;
+            border-bottom: 2px dashed #4a5568; /* Tailwind gray-700 */
+        }
+        .section:last-child {
+            border-bottom: none;
         }
         .fun-title {
-            font-size: 3rem;
+            font-size: 2.25rem; /* Tailwind text-4xl */
+            line-height: 2.5rem;
             font-weight: bold;
-            color: #f6e05e;
+            color: #f6e05e; /* Tailwind yellow-400 */
             text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
         }
-        @media (min-width: 768px) {
+        @media (min-width: 768px) { /* md breakpoint */
             .fun-title {
-                font-size: 5rem;
+                font-size: 3.75rem; /* Tailwind text-6xl */
+                line-height: 1;
             }
         }
         .fun-button {
-            background-color: #ed8936;
+            background-color: #ed8936; /* Tailwind orange-500 */
             color: white;
             padding: 0.75rem 1.5rem;
             border-radius: 9999px;
             font-weight: bold;
             box-shadow: 0 4px 6px rgba(0,0,0,0.2);
             transition: transform 0.2s, box-shadow 0.2s;
+            font-size: 1rem; /* Base font size */
+        }
+        @media (min-width: 768px) {
+            .fun-button {
+                font-size: 1.125rem; /* Tailwind text-lg */
+                padding: 1rem 2rem;
+            }
         }
         .fun-button:hover {
             transform: translateY(-2px);
@@ -48,19 +65,31 @@
         .icon-nav {
             position: fixed;
             top: 50%;
-            left: 1rem;
+            left: 0.5rem; /* Closer to edge on small screens */
             transform: translateY(-50%);
             display: flex;
             flex-direction: column;
-            gap: 1rem;
-            background-color: rgba(45, 55, 72, 0.8);
-            padding: 1rem;
+            gap: 0.75rem; /* Smaller gap */
+            background-color: rgba(45, 55, 72, 0.8); /* Tailwind slate-700 with opacity */
+            padding: 0.75rem;
             border-radius: 1.5rem;
             z-index: 50;
         }
+         @media (min-width: 768px) { /* md breakpoint */
+            .icon-nav {
+                left: 1rem;
+                gap: 1rem;
+                padding: 1rem;
+            }
+        }
         .icon-nav a {
-            font-size: 2rem;
+            font-size: 1.5rem; /* Smaller icons on small screens */
             transition: transform 0.2s;
+        }
+         @media (min-width: 768px) {
+            .icon-nav a {
+                font-size: 2rem;
+            }
         }
         .icon-nav a:hover {
             transform: scale(1.2);
@@ -77,13 +106,19 @@
         
         #telescope-canvas-container {
             width: 100%;
-            max-width: 700px; 
-            height: 350px; 
+            max-width: 600px; /* Slightly smaller max for better mobile fit */
+            height: 300px; /* Adjusted height */
             background-color: #0a0f1a; 
             border-radius: 1rem;
             margin-bottom: 1rem;
             position: relative; 
             box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+        }
+         @media (min-width: 768px) {
+            #telescope-canvas-container {
+                max-width: 700px;
+                height: 350px;
+            }
         }
         #telescopeCanvas { 
             display: block; 
@@ -94,14 +129,17 @@
          .telescope-label { 
             position: absolute;
             color: #e2e8f0; 
-            font-size: 0.75rem; 
+            font-size: 0.7rem; /* Smaller label text */
             font-weight: 500;
-            text-shadow: 1px 1px 2px rgba(0,0,0,0.8);
+            text-shadow: 1px 1px 1px rgba(0,0,0,0.7);
             pointer-events: none;
             opacity: 0;
-            transition: opacity 0.5s ease-in-out; /* Removed delay for faster appearance with animation */
+            transition: opacity 0.5s ease-in-out;
             white-space: nowrap;
             transform: translateX(-50%); 
+            padding: 2px 4px;
+            background-color: rgba(0,0,0,0.3);
+            border-radius: 4px;
         }
 
         @keyframes pulse {
@@ -114,8 +152,8 @@
         }
         .video-container {
             width: 100%;
-            max-width: 640px;
-            margin: 2rem auto;
+            max-width: 560px; /* Max width for video */
+            margin: 1.5rem auto; /* Responsive margin */
             aspect-ratio: 16 / 9;
             border-radius: 1rem;
             overflow: hidden;
@@ -123,6 +161,14 @@
         }
         #moon-map-container {
             overflow: hidden; 
+            width: 90vw; /* Responsive width */
+            max-width: 400px; /* Max width */
+            aspect-ratio: 1 / 1; /* Ensure it's square */
+        }
+         @media (min-width: 768px) {
+            #moon-map-container {
+                 max-width: 500px;
+            }
         }
         #moon-map-image {
             transition: transform 1.5s ease-in-out, opacity 0.8s ease-in-out 0.3s;
@@ -151,13 +197,18 @@
         }
         .image-caption {
             margin-top: 0.75rem; 
-            font-size: 1.125rem; 
+            font-size: 1rem; /* Adjusted for responsiveness */
             color: #cbd5e0; 
             font-weight: 600; 
         }
+         @media (min-width: 768px) {
+            .image-caption {
+                font-size: 1.125rem;
+            }
+        }
         .carousel-container {
             width: 100%;
-            max-width: 1250px; 
+            max-width: 90vw; /* More responsive max-width */
             margin: 2rem auto;
             position: relative;
             overflow: hidden;
@@ -167,14 +218,33 @@
             display: flex;
         }
         .carousel-slide {
-            flex: 0 0 auto; 
-            width: 500px; 
+            flex: 0 0 80%; /* Show more of the slide on smaller screens */
+            width: 80%;
             margin-right: 1rem; 
             box-sizing: border-box;
         }
+         @media (min-width: 640px) { /* sm breakpoint */
+            .carousel-slide {
+                flex: 0 0 60%;
+                width: 60%;
+            }
+        }
+        @media (min-width: 768px) { /* md breakpoint */
+            .carousel-slide {
+                flex: 0 0 300px; /* Revert to fixed width on larger screens if desired */
+                width: 300px;    /* Or adjust to a percentage like 45% or 30% */
+            }
+        }
+         @media (min-width: 1024px) { /* lg breakpoint */
+            .carousel-slide {
+                flex: 0 0 400px; 
+                width: 400px;
+            }
+        }
         .carousel-slide img {
             width: 100%;
-            height: 310px; 
+            aspect-ratio: 16 / 10; /* Maintain aspect ratio */
+            height: auto; /* Height will adjust based on aspect ratio and width */
             object-fit: cover;
             border-radius: 0.75rem;
             box-shadow: 0 5px 15px rgba(0,0,0,0.2);
@@ -203,10 +273,18 @@
             opacity: 1; 
         }
         .carousel-button.prev {
-            left: -10px; 
+            left: 5px; /* Adjusted for smaller screens */
         }
         .carousel-button.next {
-            right: -10px; 
+            right: 5px; /* Adjusted for smaller screens */
+        }
+         @media (min-width: 768px) {
+            .carousel-button.prev {
+                left: -10px; 
+            }
+            .carousel-button.next {
+                right: -10px; 
+            }
         }
     </style>
 </head>
@@ -225,38 +303,38 @@
         <section id="intro" class="section bg-gray-900">
             <h1 class="fun-title mb-4">Drita, Teleskopët,</h1>
             <h1 class="fun-title mb-8">dhe Hëna Jonë e Mrekullueshme!</h1>
-            <p class="text-2xl text-gray-300 mb-4">Një projekt shkollor nga një astronaut i ardhshëm!</p>
-            <p class="text-xl text-gray-400 mb-6">Noar Limani II-4</p>
-            <a href="#light" class="fun-button text-2xl">Fillo Eksplorimin! 👇</a>
+            <p class="text-xl sm:text-2xl text-gray-300 mb-4">Një projekt shkollor nga një astronaut i ardhshëm!</p>
+            <p class="text-lg sm:text-xl text-gray-400 mb-6">Noar Limani II-4</p>
+            <a href="#light" class="fun-button text-lg sm:text-xl">Fillo Eksplorimin! 👇</a>
         </section>
 
         <section id="light" class="section">
             <h2 class="fun-title mb-4">Çfarë është Drita?</h2>
-            <p class="max-w-2xl text-xl md:text-2xl text-gray-300 mb-8">Drita na ndihmon të shohim gjithçka! Ajo vjen nga gjërat e ndritshme dhe udhëton super shpejt. Kliko mbi figura për të mësuar më shumë!</p>
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-8 w-full max-w-4xl">
-                <div class="light-source-card bg-gray-800 p-6 rounded-2xl cursor-pointer" onclick="toggleLightSource(this, 'sun')">
-                    <div class="text-6xl mb-4">☀️</div>
-                    <h3 class="text-2xl font-bold text-yellow-300">Dielli</h3>
+            <p class="max-w-xl sm:max-w-2xl text-lg sm:text-xl md:text-2xl text-gray-300 mb-8">Drita na ndihmon të shohim gjithçka! Ajo vjen nga gjërat e ndritshme dhe udhëton super shpejt. Kliko mbi figura për të mësuar më shumë!</p>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-8 w-full max-w-md sm:max-w-2xl md:max-w-4xl">
+                <div class="light-source-card bg-gray-800 p-4 sm:p-6 rounded-2xl cursor-pointer" onclick="toggleLightSource(this, 'sun')">
+                    <div class="text-5xl sm:text-6xl mb-4">☀️</div>
+                    <h3 class="text-xl sm:text-2xl font-bold text-yellow-300">Dielli</h3>
                 </div>
-                <div class="light-source-card bg-gray-800 p-6 rounded-2xl cursor-pointer" onclick="toggleLightSource(this, 'lamp')">
-                    <div class="text-6xl mb-4">💡</div>
-                    <h3 class="text-2xl font-bold text-blue-300">Një Llampë</h3>
+                <div class="light-source-card bg-gray-800 p-4 sm:p-6 rounded-2xl cursor-pointer" onclick="toggleLightSource(this, 'lamp')">
+                    <div class="text-5xl sm:text-6xl mb-4">💡</div>
+                    <h3 class="text-xl sm:text-2xl font-bold text-blue-300">Një Llampë</h3>
                 </div>
-                 <div class="light-source-card bg-gray-800 p-6 rounded-2xl cursor-pointer" onclick="toggleLightSource(this, 'firefly')">
-                    <div class="text-6xl mb-4">🦟</div>
-                    <h3 class="text-2xl font-bold text-green-300">Një Xixëllonjë</h3>
+                 <div class="light-source-card bg-gray-800 p-4 sm:p-6 rounded-2xl cursor-pointer" onclick="toggleLightSource(this, 'firefly')">
+                    <div class="text-5xl sm:text-6xl mb-4">🦟</div>
+                    <h3 class="text-xl sm:text-2xl font-bold text-green-300">Një Xixëllonjë</h3>
                 </div>
-                 <div class="light-source-card bg-gray-800 p-6 rounded-2xl cursor-pointer" onclick="toggleLightSource(this, 'flashlight')">
-                    <div class="text-6xl mb-4">🔦</div>
-                    <h3 class="text-2xl font-bold text-purple-300">Një Elektrik Dore</h3>
+                 <div class="light-source-card bg-gray-800 p-4 sm:p-6 rounded-2xl cursor-pointer" onclick="toggleLightSource(this, 'flashlight')">
+                    <div class="text-5xl sm:text-6xl mb-4">🔦</div>
+                    <h3 class="text-xl sm:text-2xl font-bold text-purple-300">Një Elektrik Dore</h3>
                 </div>
             </div>
-            <div id="light-fact" class="mt-8 text-2xl h-12 text-orange-400 font-bold"></div>
+            <div id="light-fact" class="mt-8 text-xl sm:text-2xl h-12 text-orange-400 font-bold"></div>
         </section>
 
         <section id="telescope" class="section">
             <h2 class="fun-title mb-4">Sy Super të Fuqishëm!</h2>
-            <p class="max-w-2xl text-xl md:text-2xl text-gray-300 mb-8">Teleskopët përdorin THJERRËZA për të përthyer dritën dhe për t'i bërë gjërat e largëta të duken më të mëdha. Shtyp butonin për të parë se si!</p>
+            <p class="max-w-xl sm:max-w-2xl text-lg sm:text-xl md:text-2xl text-gray-300 mb-8">Teleskopët përdorin THJERRËZA për të përthyer dritën dhe për t'i bërë gjërat e largëta të duken më të mëdha. Shtyp butonin për të parë se si!</p>
             <div id="telescope-canvas-container">
                 <canvas id="telescopeCanvas"></canvas>
                 <div id="label-canvas-source-moon" class="telescope-label">Hëna</div>
@@ -270,20 +348,20 @@
 
         <section id="moon" class="section">
             <h2 class="fun-title mb-4">Hëna Jonë Misterioze</h2>
-            <p class="max-w-2xl text-xl md:text-2xl text-gray-300 mb-8">A e ke vënë re që Hëna ndryshon formë? Këto quhen Faza! Nuk është magji, thjesht varet se si Dielli e ndriçon atë.</p>
-            <div class="flex flex-col md:flex-row items-center justify-center gap-8 w-full max-w-5xl">
-                <div class="relative w-64 h-64 md:w-80 md:h-80">
+            <p class="max-w-xl sm:max-w-2xl text-lg sm:text-xl md:text-2xl text-gray-300 mb-8">A e ke vënë re që Hëna ndryshon formë? Këto quhen Faza! Nuk është magji, thjesht varet se si Dielli e ndriçon atë.</p>
+            <div class="flex flex-col md:flex-row items-center justify-center gap-8 w-full max-w-lg md:max-w-3xl lg:max-w-5xl">
+                <div class="relative w-48 h-48 sm:w-64 sm:h-64 md:w-80 md:h-80">
                     <div class="absolute inset-0 border-2 border-dashed border-gray-600 rounded-full"></div>
-                    <div id="moon-earth" class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-7xl md:text-8xl">🌍</div>
+                    <div id="moon-earth" class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-6xl sm:text-7xl md:text-8xl">🌍</div>
                     <div id="moon-orbit" class="absolute inset-0 transition-transform duration-1000">
-                        <div id="moon-object" class="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1/2 text-5xl md:text-6xl">🌓</div>
+                        <div id="moon-object" class="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1/2 text-4xl sm:text-5xl md:text-6xl">🌓</div>
                     </div>
-                    <div class="absolute -right-20 md:-right-32 top-1/2 -translate-y-1/2 text-7xl md:text-8xl">☀️</div>
+                    <div class="absolute -right-16 sm:-right-20 md:-right-32 top-1/2 -translate-y-1/2 text-6xl sm:text-7xl md:text-8xl">☀️</div>
                 </div>
-                <div class="text-center">
-                    <h3 class="text-3xl font-bold text-yellow-300 mb-4">Çfarë shohim nga Toka:</h3>
-                    <div id="moon-phase-display" class="text-9xl mb-4">🌓</div>
-                    <p id="moon-phase-name" class="text-2xl text-gray-300 font-bold mb-6">Çereku i Parë</p>
+                <div class="text-center mt-8 md:mt-0">
+                    <h3 class="text-2xl sm:text-3xl font-bold text-yellow-300 mb-4">Çfarë shohim nga Toka:</h3>
+                    <div id="moon-phase-display" class="text-7xl sm:text-8xl md:text-9xl mb-4">🌓</div>
+                    <p id="moon-phase-name" class="text-xl sm:text-2xl text-gray-300 font-bold mb-6">Çereku i Parë</p>
                     <button id="phase-btn" class="fun-button">Faza Tjetër</button>
                 </div>
             </div>
@@ -291,15 +369,15 @@
 
         <section id="apollo" class="section">
             <h2 class="fun-title mb-4">Një Hap Gjigant!</h2>
-            <p class="max-w-3xl text-xl md:text-2xl text-gray-300 mb-8">A e dije që njerëzit kanë ECUR në Hënë? Misioni Apollo 11 ishte hera e parë që njerëzit vizituan një botë tjetër.</p>
+            <p class="max-w-xl sm:max-w-2xl md:max-w-3xl text-lg sm:text-xl md:text-2xl text-gray-300 mb-8">A e dije që njerëzit kanë ECUR në Hënë? Misioni Apollo 11 ishte hera e parë që njerëzit vizituan një botë tjetër.</p>
             
             <div id="video-player-container" class="video-container">
                 <div id="apollo-video-player"></div>
             </div>
             
-            <p class="max-w-3xl text-xl md:text-2xl text-gray-300 mt-8 mb-8">Kliko shenjën në hartën e Hënës më poshtë për të parë ku u ulën!</p>
+            <p class="max-w-xl sm:max-w-2xl md:max-w-3xl text-lg sm:text-xl md:text-2xl text-gray-300 mt-8 mb-8">Kliko shenjën në hartën e Hënës më poshtë për të parë ku u ulën!</p>
 
-            <div class="w-full max-w-lg text-center">
+            <div class="w-full max-w-xs sm:max-w-sm md:max-w-lg text-center">
                 <div id="moon-map-container" class="aspect-square rounded-full bg-gray-700 relative cursor-pointer mx-auto">
                      <img id="moon-map-image" src="https://images.pexels.com/photos/47367/full-moon-moon-bright-sky-47367.jpeg"
                           class="w-full h-full rounded-full object-cover"
@@ -309,9 +387,9 @@
                           class="w-full h-full rounded-full object-cover"
                           onerror="this.onerror=null; this.src='https://placehold.co/800x800/777777/ffffff?text=Detaj+Alternative';"
                           alt="Pamje e zmadhuar e Detit të Qetësisë"/>
-                    <div id="tranquility-marker-container" class="absolute top-[40%] left-[55%] transform -translate-x-1/2 -translate-y-1/2 cursor-pointer" onclick="zoomToTranquility()">
-                        <div class="pulse-marker w-10 h-10 rounded-full border-4 border-yellow-300 bg-yellow-300/50 flex items-center justify-center">
-                            <div class="w-2 h-2 rounded-full bg-yellow-100"></div>
+                    <div id="tranquility-marker-container" class="absolute top-[40%] left-[55%] transform -translate-x-1/2 -translate-y-1/2 cursor-pointer">
+                        <div class="pulse-marker w-8 h-8 sm:w-10 sm:h-10 rounded-full border-4 border-yellow-300 bg-yellow-300/50 flex items-center justify-center">
+                            <div class="w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full bg-yellow-100"></div>
                         </div>
                     </div>
                 </div>
@@ -321,22 +399,22 @@
 
         <section id="landing-site" class="section bg-gray-800">
              <h2 class="fun-title mb-4">Deti i Qetësisë</h2>
-             <p class="max-w-2xl text-xl md:text-2xl text-gray-300 mb-8">Këtu u ulën ata! Mblodhën gurë hëne, bënë eksperimente dhe lanë gjurmët e para të këmbëve në Hënë.</p>
-             <div class="w-full max-w-4xl grid grid-cols-1 md:grid-cols-2 gap-8">
-                 <div class="bg-gray-700 p-4 rounded-2xl">
+             <p class="max-w-xl sm:max-w-2xl md:max-w-3xl text-lg sm:text-xl md:text-2xl text-gray-300 mb-8">Këtu u ulën ata! Mblodhën gurë hëne, bënë eksperimente dhe lanë gjurmët e para të këmbëve në Hënë.</p>
+             <div class="w-full max-w-md sm:max-w-2xl md:max-w-4xl grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-8">
+                 <div class="bg-gray-700 p-3 sm:p-4 rounded-2xl">
                     <img src="https://scx1.b-cdn.net/csz/news/800a/2020/apollomoon.jpg" class="w-full h-auto rounded-lg object-cover aspect-[3/2]" onerror="this.onerror=null;this.src='https://placehold.co/600x400/cccccc/ffffff?text=Imazhi+i+Misionit+Apollo';" alt="Misioni Apollo 11 në Hënë">
-                    <p class="mt-4 font-bold text-xl">Një hap i vogël për njeriun...</p>
+                    <p class="mt-2 sm:mt-4 font-bold text-base sm:text-xl">Një hap i vogël për njeriun...</p>
                  </div>
-                 <div class="bg-gray-700 p-4 rounded-2xl">
+                 <div class="bg-gray-700 p-3 sm:p-4 rounded-2xl">
                     <img src="https://nssdc.gsfc.nasa.gov/imgcat/higher_res/apollo/as11_40_5878.jpg" class="w-full h-auto rounded-lg object-cover aspect-[3/2]" onerror="this.onerror=null;this.src='https://placehold.co/600x400/cccccc/ffffff?text=Imazhi+i+Gjurmës';" alt="Gjurmë këmbe në Hënë">
-                     <p class="mt-4 font-bold text-xl">...një hap gjigant për njerëzimin!</p>
+                     <p class="mt-2 sm:mt-4 font-bold text-base sm:text-xl">...një hap gjigant për njerëzimin!</p>
                  </div>
              </div>
         </section>
         
         <section id="noar-adventures" class="section bg-gray-900">
             <h2 class="fun-title mb-8">Aventurat e Noarit në Hapësirë!</h2>
-            <p class="max-w-2xl text-xl md:text-2xl text-gray-300 mb-8">Shikoni disa nga fotot e mrekullueshme të Noarit duke eksploruar me teleskopin e tij dhe fotot që ka bërë!</p>
+            <p class="max-w-xl sm:max-w-2xl md:max-w-3xl text-lg sm:text-xl md:text-2xl text-gray-300 mb-8">Shikoni disa nga fotot e mrekullueshme të Noarit duke eksploruar me teleskopin e tij dhe fotot që ka bërë!</p>
             <div class="carousel-container">
                 <div class="carousel-track">
                     </div>
@@ -346,7 +424,7 @@
         </section>
 
         <footer class="text-center p-8 bg-gray-900 border-t-0"> 
-            <h2 class="fun-title text-4xl mb-4">Faleminderit që Eksploruat! 🚀</h2>
+            <h2 class="fun-title text-3xl sm:text-4xl mb-4">Faleminderit që Eksploruat! 🚀</h2>
         </footer>
     </main>
     
@@ -368,6 +446,7 @@
                 telescopeCanvasBtn.addEventListener('click', startCanvasTelescopeAnimation);
             }
             initializeCanvasTelescope();
+             window.addEventListener('resize', initializeCanvasTelescope); // Re-initialize on resize
 
 
             const phaseBtn = document.getElementById('phase-btn');
@@ -403,14 +482,14 @@
         let canvasAnimFrameId;
         let canvasElements = {}; 
         
-        const canvasObject = { xPercent: 0.08, yPercent: 0.5, radiusPercent: 0.04 }; // Source Moon
+        const canvasObject = { xPercent: 0.08, yPercent: 0.5, radiusPercent: 0.04 }; 
         const objectiveLensDef = { xPercent: 0.30, yPercent: 0.5, widthPercent: 0.03, heightPercent: 0.6 };
-        const focalPointDef = { xPercent: 0.50, yPercent: 0.5 }; // Focal point clearly before eyepiece
-        const eyepieceLensDef = { xPercent: 0.65, yPercent: 0.5, widthPercent: 0.02, heightPercent: 0.4 }; // Eyepiece after focal point
-        const magnifiedObjectDef = { xPercent: 0.90, yPercent: 0.5, initialRadiusPercent: 0.04, magnifiedRadiusPercent: 0.10 }; // Slightly smaller magnified
+        const focalPointDef = { xPercent: 0.50, yPercent: 0.5 }; 
+        const eyepieceLensDef = { xPercent: 0.65, yPercent: 0.5, widthPercent: 0.02, heightPercent: 0.4 }; 
+        const magnifiedObjectDef = { xPercent: 0.90, yPercent: 0.5, initialRadiusPercent: 0.04, magnifiedRadiusPercent: 0.10 };
 
-        const rayInitialOffsetYPercent = 0.12; // Wider initial separation for parallel rays
-        const rayDivergeSpreadFactor = 0.18; // Increased spread for diverging rays
+        const rayInitialOffsetYPercent = 0.12; 
+        const rayDivergeSpreadFactor = 0.18; 
 
         function initializeCanvasTelescope() {
             canvas = document.getElementById("telescopeCanvas");
@@ -425,6 +504,7 @@
                  console.error("Canvas container not found.");
                  return;
             }
+            // Set canvas dimensions based on its container
             canvas.width = container.clientWidth;
             canvas.height = container.clientHeight;
 
@@ -434,6 +514,7 @@
             canvasElements.labelFocalPoint = document.getElementById('label-canvas-focal-point');
             canvasElements.labelMagnifiedMoon = document.getElementById('label-canvas-magnified-moon');
             
+            // Position labels based on current canvas dimensions
             if(canvasElements.labelSourceMoon) {
                 canvasElements.labelSourceMoon.style.left = `${canvasObject.xPercent * canvas.width}px`;
                 canvasElements.labelSourceMoon.style.top = `${canvasObject.yPercent * canvas.height + (canvasObject.radiusPercent * canvas.height) + 10}px`;
@@ -520,12 +601,12 @@
                 const factor2 = Math.min(progressInPhase2 / maxLenPhase2, 1);
 
                 if (currentLenPhase2 > 0) {
-                    ctx.beginPath(); ctx.moveTo(objLensX, rayY1_at_source); // Start from where parallel ray hit lens
+                    ctx.beginPath(); ctx.moveTo(objLensX, rayY1_at_source); 
                     ctx.lineTo(objLensX + currentLenPhase2 * Math.cos(Math.atan2(focalY - rayY1_at_source, focalX - objLensX)), 
                                rayY1_at_source + currentLenPhase2 * Math.sin(Math.atan2(focalY - rayY1_at_source, focalX - objLensX)));
                     ctx.stroke();
 
-                    ctx.beginPath(); ctx.moveTo(objLensX, rayY2_at_source); // Start from where parallel ray hit lens
+                    ctx.beginPath(); ctx.moveTo(objLensX, rayY2_at_source); 
                     ctx.lineTo(objLensX + currentLenPhase2 * Math.cos(Math.atan2(focalY - rayY2_at_source, focalX - objLensX)), 
                                rayY2_at_source + currentLenPhase2 * Math.sin(Math.atan2(focalY - rayY2_at_source, focalX - objLensX)));
                     ctx.stroke();
@@ -569,22 +650,50 @@
         
         function startCanvasTelescopeAnimationLoop() {
             if (!ctx || !canvas) return;
-            drawAnimatedCanvasElements(canvasAnimationProgress);
             
-            const totalAnimationDistance = 1; 
-            if (canvasAnimationProgress < totalAnimationDistance) {
-                canvasAnimationProgress += 0.008; // Slower animation speed
+            let currentProgress = canvasAnimationProgress;
+            if (currentProgress > 1) currentProgress = 1;
+
+            drawAnimatedCanvasElements(currentProgress);
+            
+            if (canvasAnimationProgress < 1) { 
+                canvasAnimationProgress += 0.008; 
                 canvasAnimFrameId = requestAnimationFrame(startCanvasTelescopeAnimationLoop);
             } else {
-                 if (canvasElements.labelFocalPoint) canvasElements.labelFocalPoint.style.opacity = '0'; 
+                // Animation complete, show final state without rays for a bit
+                drawFinalTelescopeView();
+                if (canvasElements.labelFocalPoint) canvasElements.labelFocalPoint.style.opacity = '0'; 
+                if (canvasElements.labelMagnifiedMoon) canvasElements.labelMagnifiedMoon.style.opacity = '1';
+
+                setTimeout(() => {
+                    resetCanvasToInitialState();
+                }, 2000); // Wait 2 seconds then reset
             }
         }
-
-        function startCanvasTelescopeAnimation() {
+        
+        function resetCanvasToInitialState() {
+            if (!ctx || !canvas) return;
             if (canvasAnimFrameId) {
                 cancelAnimationFrame(canvasAnimFrameId);
+                canvasAnimFrameId = null;
             }
-            canvasAnimationProgress = 0;
+            canvasAnimationProgress = 0; // Reset progress for next play
+            drawStaticCanvasElements(); 
+            // Keep static labels visible, hide dynamic ones
+            if(canvasElements.labelSourceMoon) canvasElements.labelSourceMoon.style.opacity = '1';
+            if(canvasElements.labelObjectiveLens) canvasElements.labelObjectiveLens.style.opacity = '1';
+            if(canvasElements.labelEyepieceLens) canvasElements.labelEyepieceLens.style.opacity = '1';
+            if (canvasElements.labelFocalPoint) canvasElements.labelFocalPoint.style.opacity = '0';
+            if (canvasElements.labelMagnifiedMoon) canvasElements.labelMagnifiedMoon.style.opacity = '0';
+        }
+
+
+        function startCanvasTelescopeAnimation() {
+            if (canvasAnimFrameId) { // If animation is already running, stop it
+                cancelAnimationFrame(canvasAnimFrameId);
+            }
+            canvasAnimationProgress = 0; // Reset progress
+            // Set initial label visibilities
             if(canvasElements.labelSourceMoon) canvasElements.labelSourceMoon.style.opacity = '1';
             if(canvasElements.labelObjectiveLens) canvasElements.labelObjectiveLens.style.opacity = '1';
             if(canvasElements.labelEyepieceLens) canvasElements.labelEyepieceLens.style.opacity = '1';
@@ -594,832 +703,18 @@
             startCanvasTelescopeAnimationLoop();
         }
 
-
-        let moonPhaseIndex = 0; 
-        const moonPhasesData = [
-            { emoji: '🌓', name: 'Çereku i Parë', angle: 0 },      
-            { emoji: '🌔', name: 'Gunga Rritëse', angle: 45 },
-            { emoji: '🌕', name: 'Hëna e Plotë', angle: 90 },
-            { emoji: '🌖', name: 'Gunga Zbritëse', angle: 135 },
-            { emoji: '🌗', name: 'Çereku i Fundit', angle: 180 }, 
-            { emoji: '🌘', name: 'Draperi Zbritës', angle: 225 },
-            { emoji: '🌑', name: 'Hëna e Re', angle: 270 },
-            { emoji: '🌒', name: 'Draperi Rritës', angle: 315 }
-        ];
-        
-        let currentVisualOrbitAngle = moonPhasesData[moonPhaseIndex].angle;
-
-        function updateMoonPhaseDisplay() {
-            const phase = moonPhasesData[moonPhaseIndex];
-            const moonPhaseDisplayEl = document.getElementById('moon-phase-display');
-            const moonPhaseNameEl = document.getElementById('moon-phase-name');
-            const moonObjectEl = document.getElementById('moon-object');
-
-            if (moonPhaseDisplayEl) moonPhaseDisplayEl.textContent = phase.emoji;
-            if (moonPhaseNameEl) moonPhaseNameEl.textContent = phase.name;
-            if (moonObjectEl) moonObjectEl.textContent = phase.emoji; 
-            
-            const moonOrbitEl = document.getElementById('moon-orbit');
-            if (moonOrbitEl) moonOrbitEl.style.transform = `rotate(${currentVisualOrbitAngle}deg)`;
-        }
-
-        function handleNextMoonPhase() {
-            const previousCanonicalAngle = moonPhasesData[moonPhaseIndex].angle;
-            moonPhaseIndex = (moonPhaseIndex + 1) % moonPhasesData.length;
-            const nextCanonicalAngle = moonPhasesData[moonPhaseIndex].angle;
-
-            let angleDifference;
-            if (nextCanonicalAngle < previousCanonicalAngle) { 
-                angleDifference = (360 - previousCanonicalAngle) + nextCanonicalAngle;
-            } else {
-                angleDifference = nextCanonicalAngle - previousCanonicalAngle;
-            }
-            currentVisualOrbitAngle += angleDifference;
-
-            updateMoonPhaseDisplay();
-        }
-
-        function zoomToTranquility() {
-            const moonMapImage = document.getElementById('moon-map-image');
-            const detailImage = document.getElementById('sea-of-tranquility-detail');
-            const markerContainer = document.getElementById('tranquility-marker-container');
-            const landingSiteSection = document.getElementById('landing-site');
-            const captionElement = document.getElementById('moon-map-caption');
-
-            if (moonMapImage && detailImage && markerContainer && landingSiteSection && captionElement) {
-                const originX = '55%'; 
-                const originY = '40%';
-                moonMapImage.style.transformOrigin = `${originX} ${originY}`;
-                detailImage.style.transformOrigin = `${originX} ${originY}`;
-                
-                moonMapImage.classList.add('zoomed-in');
-                markerContainer.style.opacity = '0';
-                if(captionElement) captionElement.textContent = 'Deti i Qetësisë (Pamje e Zmadhuar)';
-
-
-                setTimeout(() => {
-                    moonMapImage.style.opacity = '0';
-                    detailImage.classList.add('visible-zoomed');
-                }, 300); 
-
-                setTimeout(() => {
-                    landingSiteSection.scrollIntoView({ behavior: 'smooth' });
-                }, 2500); 
-
-                setTimeout(() => {
-                    moonMapImage.classList.remove('zoomed-in');
-                    moonMapImage.style.opacity = '1';
-                    detailImage.classList.remove('visible-zoomed');
-                    markerContainer.style.opacity = '1';
-                    if(captionElement) captionElement.textContent = 'Harta e Hënës';
-                }, 4000); 
-            }
-        }
-
-        const carouselTrack = document.querySelector('.carousel-track');
-        const carouselContainer = document.querySelector('.carousel-container');
-        const placeholderImageSources = [
-            "images/noari_telescope1.webp",
-            "images/noari_telescope2.webp",
-            "images/noari_hena.webp",
-            "images/noari_telescope3.webp",
-            "images/noari_space.webp" 
-        ];
-        const slideWidth = 500; 
-        const slideMargin = 16; 
-        const totalSlideWidth = slideWidth + slideMargin;
-        let currentTrackPosition = 0;
-        let scrollSpeed = 0.8; 
-        let isCarouselPaused = false;
-        let carouselAnimFrameId;
-
-        function populateCarousel() {
-            if (!carouselTrack) return;
-            carouselTrack.innerHTML = ''; 
-            const allImages = [...placeholderImageSources, ...placeholderImageSources]; 
-            allImages.forEach(src => {
-                const slideDiv = document.createElement('div');
-                slideDiv.classList.add('carousel-slide');
-                const img = document.createElement('img');
-                img.src = src;
-                img.alt = "Imazh nga aventurat e Noarit"; 
-                img.onerror = function() { this.onerror=null; this.src='https://placehold.co/800x500/777777/ffffff?text=Problem+me+Imazhin+(webp)'; };
-                slideDiv.appendChild(img);
-                carouselTrack.appendChild(slideDiv);
-            });
-            carouselTrack.style.width = `${totalSlideWidth * allImages.length}px`;
-        }
-
-        function autoScrollCarousel() {
-            if (!isCarouselPaused && carouselTrack) {
-                currentTrackPosition -= scrollSpeed;
-                if (currentTrackPosition <= -(totalSlideWidth * placeholderImageSources.length)) {
-                    carouselTrack.style.transition = 'none'; 
-                    currentTrackPosition += (totalSlideWidth * placeholderImageSources.length);
-                    carouselTrack.style.transform = `translateX(${currentTrackPosition}px)`;
-                    void carouselTrack.offsetWidth; 
-                    carouselTrack.style.transition = ''; 
-                } else {
-                    carouselTrack.style.transform = `translateX(${currentTrackPosition}px)`;
-                }
-            }
-            carouselAnimFrameId = requestAnimationFrame(autoScrollCarousel);
-        }
-        
-        function manualCarouselChange(direction) {
-            if (!carouselTrack) return;
-            isCarouselPaused = true; 
-            cancelAnimationFrame(carouselAnimFrameId);
-
-            const numOriginalSlides = placeholderImageSources.length;
-            let currentEffectiveIndex = Math.floor(Math.abs(currentTrackPosition) / totalSlideWidth);
-            
-            currentEffectiveIndex += direction;
-            currentTrackPosition = -(currentEffectiveIndex * totalSlideWidth);
-
-            const totalOriginalSetWidth = totalSlideWidth * numOriginalSlides;
-            if (currentTrackPosition < -totalOriginalSetWidth) { 
-                currentTrackPosition += totalOriginalSetWidth; 
-            } else if (currentTrackPosition > 0) { 
-                currentTrackPosition -= totalOriginalSetWidth; 
-                if (currentTrackPosition === 0 && direction === -1) currentTrackPosition = -totalOriginalSetWidth + totalSlideWidth;
-            }
-            
-            carouselTrack.style.transition = 'transform 0.5s ease-in-out'; 
-            carouselTrack.style.transform = `translateX(${currentTrackPosition}px)`;
-            
-            setTimeout(() => {
-                if (carouselTrack) carouselTrack.style.transition = 'none'; 
-                if (carouselContainer && !carouselContainer.matches(':hover')) { 
-                    isCarouselPaused = false;
-                    autoScrollCarousel();
-                }
-            }, 500); 
-        }
-
-        function initializeCarousel() {
-            populateCarousel();
-            if (carouselContainer && carouselTrack) {
-                carouselContainer.addEventListener('mouseenter', () => {
-                    isCarouselPaused = true;
-                    if (carouselAnimFrameId) cancelAnimationFrame(carouselAnimFrameId);
-                });
-                carouselContainer.addEventListener('mouseleave', () => {
-                    isCarouselPaused = false;
-                    if (carouselTrack) carouselTrack.style.transition = 'none'; 
-                    autoScrollCarousel(); 
-                });
-                if (carouselTrack) carouselTrack.style.transition = 'none'; 
-                autoScrollCarousel(); 
-            }
-        }
-
-        // YouTube Player API
-        let apolloVideoPlayer;
-        const videoId = 'g5aPoRtF2vw'; 
-
-        function onYouTubeIframeAPIReady() {
-            apolloVideoPlayer = new YT.Player('apollo-video-player', {
-                height: '100%',
-                width: '100%',
-                videoId: videoId,
-                playerVars: {
-                    'playsinline': 1,
-                    'modestbranding': 1,
-                    'rel': 0,
-                    'controls': 0 
-                },
-                events: {
-                    'onReady': onPlayerReady,
-                    'onStateChange': onPlayerStateChange 
-                }
-            });
-        }
-
-        function onPlayerReady(event) {
-            setupVideoObserver();
-        }
-
-        function onPlayerStateChange(event) {
-            if (event.data == YT.PlayerState.ENDED) {
-                const moonMapElement = document.getElementById('moon-map-container'); 
-                if (moonMapElement) {
-                    moonMapElement.scrollIntoView({ behavior: 'smooth', block: 'center' }); 
-                }
-            }
-        }
-
-        function setupVideoObserver() {
-            const videoContainer = document.getElementById('video-player-container');
-            if (!videoContainer || !apolloVideoPlayer) return;
-
-            const observerOptions = {
-                root: null, 
-                rootMargin: '0px',
-                threshold: 0.5 
-            };
-
-            const observerCallback = (entries, observer) => {
-                entries.forEach(entry => {
-                    if (typeof apolloVideoPlayer.playVideo !== 'function' || typeof apolloVideoPlayer.pauseVideo !== 'function') {
-                        return;
-                    }
-                    if (entry.isIntersecting) {
-                        apolloVideoPlayer.playVideo();
-                    <!DOCTYPE html>
-<html lang="sq">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Drita, Teleskopët dhe Hëna Jonë e Mrekullueshme!</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <style>
-        body {
-            font-family: 'Comic Sans MS', 'Chalkboard SE', 'Marker Felt', sans-serif;
-            background-color: #1a202c;
-            color: #f7fafc;
-        }
-        .section {
-            min-height: 100vh;
-            padding: 4rem 1rem;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            text-align: center;
-            border-bottom: 2px dashed #4a5568;
-        }
-        .fun-title {
-            font-size: 3rem;
-            font-weight: bold;
-            color: #f6e05e;
-            text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
-        }
-        @media (min-width: 768px) {
-            .fun-title {
-                font-size: 5rem;
-            }
-        }
-        .fun-button {
-            background-color: #ed8936;
-            color: white;
-            padding: 0.75rem 1.5rem;
-            border-radius: 9999px;
-            font-weight: bold;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.2);
-            transition: transform 0.2s, box-shadow 0.2s;
-        }
-        .fun-button:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 6px 8px rgba(0,0,0,0.3);
-        }
-        .icon-nav {
-            position: fixed;
-            top: 50%;
-            left: 1rem;
-            transform: translateY(-50%);
-            display: flex;
-            flex-direction: column;
-            gap: 1rem;
-            background-color: rgba(45, 55, 72, 0.8);
-            padding: 1rem;
-            border-radius: 1.5rem;
-            z-index: 50;
-        }
-        .icon-nav a {
-            font-size: 2rem;
-            transition: transform 0.2s;
-        }
-        .icon-nav a:hover {
-            transform: scale(1.2);
-        }
-        .light-source-card {
-            border: 4px solid #4a5568;
-            transition: all 0.3s;
-        }
-        .light-source-card.active {
-            border-color: #f6e05e;
-            transform: scale(1.05);
-            box-shadow: 0 0 20px #f6e05e;
-        }
-        
-        #telescope-canvas-container {
-            width: 100%;
-            max-width: 700px; 
-            height: 350px; 
-            background-color: #0a0f1a; 
-            border-radius: 1rem;
-            margin-bottom: 1rem;
-            position: relative; 
-            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
-        }
-        #telescopeCanvas { 
-            display: block; 
-            width: 100%;
-            height: 100%;
-            border-radius: 1rem; 
-        }
-         .telescope-label { 
-            position: absolute;
-            color: #e2e8f0; 
-            font-size: 0.75rem; 
-            font-weight: 500;
-            text-shadow: 1px 1px 2px rgba(0,0,0,0.8);
-            pointer-events: none;
-            opacity: 0;
-            transition: opacity 0.5s ease-in-out; /* Removed delay for faster appearance with animation */
-            white-space: nowrap;
-            transform: translateX(-50%); 
-        }
-
-        @keyframes pulse {
-            0%, 100% { transform: scale(1); }
-            50% { transform: scale(1.1); }
-        }
-        .pulse-marker {
-            animation: pulse 2s infinite;
-            transition: opacity 0.5s ease-out;
-        }
-        .video-container {
-            width: 100%;
-            max-width: 640px;
-            margin: 2rem auto;
-            aspect-ratio: 16 / 9;
-            border-radius: 1rem;
-            overflow: hidden;
-            box-shadow: 0 10px 20px rgba(0,0,0,0.3);
-        }
-        #moon-map-container {
-            overflow: hidden; 
-        }
-        #moon-map-image {
-            transition: transform 1.5s ease-in-out, opacity 0.8s ease-in-out 0.3s;
-            transform-origin: 55% 40%; 
-        }
-        #moon-map-image.zoomed-in {
-            transform: scale(3); 
-        }
-        #sea-of-tranquility-detail {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-            border-radius: 50%; 
-            opacity: 0;
-            transition: opacity 0.8s ease-in-out, transform 1.5s ease-in-out;
-            transform-origin: 55% 40%; 
-            transform: scale(1); 
-            pointer-events: none; 
-        }
-        #sea-of-tranquility-detail.visible-zoomed {
-            opacity: 1;
-            transform: scale(3); 
-        }
-        .image-caption {
-            margin-top: 0.75rem; 
-            font-size: 1.125rem; 
-            color: #cbd5e0; 
-            font-weight: 600; 
-        }
-        .carousel-container {
-            width: 100%;
-            max-width: 1250px; 
-            margin: 2rem auto;
-            position: relative;
-            overflow: hidden;
-            padding: 1rem 0; 
-        }
-        .carousel-track {
-            display: flex;
-        }
-        .carousel-slide {
-            flex: 0 0 auto; 
-            width: 500px; 
-            margin-right: 1rem; 
-            box-sizing: border-box;
-        }
-        .carousel-slide img {
-            width: 100%;
-            height: 310px; 
-            object-fit: cover;
-            border-radius: 0.75rem;
-            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
-            display: block;
-        }
-        .carousel-button {
-            position: absolute;
-            top: 50%;
-            transform: translateY(-50%);
-            background-color: rgba(237, 137, 54, 0.9); 
-            color: white;
-            border: none;
-            padding: 0.5rem; 
-            width: 2.5rem; 
-            height: 2.5rem; 
-            border-radius: 50%;
-            cursor: pointer;
-            font-size: 1.25rem;
-            font-weight: bold;
-            z-index: 10;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.3);
-            opacity: 0; 
-            transition: opacity 0.3s ease-in-out;
-        }
-        .carousel-container:hover .carousel-button {
-            opacity: 1; 
-        }
-        .carousel-button.prev {
-            left: -10px; 
-        }
-        .carousel-button.next {
-            right: -10px; 
-        }
-    </style>
-</head>
-<body class="overflow-x-hidden">
-
-    <nav class="icon-nav hidden md:flex">
-        <a href="#intro" title="Hyrja">🌟</a>
-        <a href="#light" title="Drita">💡</a>
-        <a href="#telescope" title="Teleskopi">🔭</a>
-        <a href="#moon" title="Hëna">🌙</a>
-        <a href="#apollo" title="Apollo 11">🚀</a>
-        <a href="#noar-adventures" title="Aventurat e Noarit">🖼️</a>
-    </nav>
-
-    <main>
-        <section id="intro" class="section bg-gray-900">
-            <h1 class="fun-title mb-4">Drita, Teleskopët,</h1>
-            <h1 class="fun-title mb-8">dhe Hëna Jonë e Mrekullueshme!</h1>
-            <p class="text-2xl text-gray-300 mb-4">Një projekt shkollor nga një astronaut i ardhshëm!</p>
-            <p class="text-xl text-gray-400 mb-6">Noar Limani II-4</p>
-            <a href="#light" class="fun-button text-2xl">Fillo Eksplorimin! 👇</a>
-        </section>
-
-        <section id="light" class="section">
-            <h2 class="fun-title mb-4">Çfarë është Drita?</h2>
-            <p class="max-w-2xl text-xl md:text-2xl text-gray-300 mb-8">Drita na ndihmon të shohim gjithçka! Ajo vjen nga gjërat e ndritshme dhe udhëton super shpejt. Kliko mbi figura për të mësuar më shumë!</p>
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-8 w-full max-w-4xl">
-                <div class="light-source-card bg-gray-800 p-6 rounded-2xl cursor-pointer" onclick="toggleLightSource(this, 'sun')">
-                    <div class="text-6xl mb-4">☀️</div>
-                    <h3 class="text-2xl font-bold text-yellow-300">Dielli</h3>
-                </div>
-                <div class="light-source-card bg-gray-800 p-6 rounded-2xl cursor-pointer" onclick="toggleLightSource(this, 'lamp')">
-                    <div class="text-6xl mb-4">💡</div>
-                    <h3 class="text-2xl font-bold text-blue-300">Një Llampë</h3>
-                </div>
-                 <div class="light-source-card bg-gray-800 p-6 rounded-2xl cursor-pointer" onclick="toggleLightSource(this, 'firefly')">
-                    <div class="text-6xl mb-4">🦟</div>
-                    <h3 class="text-2xl font-bold text-green-300">Një Xixëllonjë</h3>
-                </div>
-                 <div class="light-source-card bg-gray-800 p-6 rounded-2xl cursor-pointer" onclick="toggleLightSource(this, 'flashlight')">
-                    <div class="text-6xl mb-4">🔦</div>
-                    <h3 class="text-2xl font-bold text-purple-300">Një Elektrik Dore</h3>
-                </div>
-            </div>
-            <div id="light-fact" class="mt-8 text-2xl h-12 text-orange-400 font-bold"></div>
-        </section>
-
-        <section id="telescope" class="section">
-            <h2 class="fun-title mb-4">Sy Super të Fuqishëm!</h2>
-            <p class="max-w-2xl text-xl md:text-2xl text-gray-300 mb-8">Teleskopët përdorin THJERRËZA për të përthyer dritën dhe për t'i bërë gjërat e largëta të duken më të mëdha. Shtyp butonin për të parë se si!</p>
-            <div id="telescope-canvas-container">
-                <canvas id="telescopeCanvas"></canvas>
-                <div id="label-canvas-source-moon" class="telescope-label">Hëna</div>
-                <div id="label-canvas-objective-lens" class="telescope-label">Thjerrëza Objektive</div>
-                <div id="label-canvas-focal-point" class="telescope-label">Pika Fokale</div>
-                <div id="label-canvas-eyepiece-lens" class="telescope-label">Okulari</div>
-                <div id="label-canvas-magnified-moon" class="telescope-label">Hëna e Zmadhuar</div>
-            </div>
-            <button id="telescope-canvas-btn" class="fun-button mt-4">Shiko si funksionon!</button>
-        </section>
-
-        <section id="moon" class="section">
-            <h2 class="fun-title mb-4">Hëna Jonë Misterioze</h2>
-            <p class="max-w-2xl text-xl md:text-2xl text-gray-300 mb-8">A e ke vënë re që Hëna ndryshon formë? Këto quhen Faza! Nuk është magji, thjesht varet se si Dielli e ndriçon atë.</p>
-            <div class="flex flex-col md:flex-row items-center justify-center gap-8 w-full max-w-5xl">
-                <div class="relative w-64 h-64 md:w-80 md:h-80">
-                    <div class="absolute inset-0 border-2 border-dashed border-gray-600 rounded-full"></div>
-                    <div id="moon-earth" class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-7xl md:text-8xl">🌍</div>
-                    <div id="moon-orbit" class="absolute inset-0 transition-transform duration-1000">
-                        <div id="moon-object" class="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1/2 text-5xl md:text-6xl">🌓</div>
-                    </div>
-                    <div class="absolute -right-20 md:-right-32 top-1/2 -translate-y-1/2 text-7xl md:text-8xl">☀️</div>
-                </div>
-                <div class="text-center">
-                    <h3 class="text-3xl font-bold text-yellow-300 mb-4">Çfarë shohim nga Toka:</h3>
-                    <div id="moon-phase-display" class="text-9xl mb-4">🌓</div>
-                    <p id="moon-phase-name" class="text-2xl text-gray-300 font-bold mb-6">Çereku i Parë</p>
-                    <button id="phase-btn" class="fun-button">Faza Tjetër</button>
-                </div>
-            </div>
-        </section>
-
-        <section id="apollo" class="section">
-            <h2 class="fun-title mb-4">Një Hap Gjigant!</h2>
-            <p class="max-w-3xl text-xl md:text-2xl text-gray-300 mb-8">A e dije që njerëzit kanë ECUR në Hënë? Misioni Apollo 11 ishte hera e parë që njerëzit vizituan një botë tjetër.</p>
-            
-            <div id="video-player-container" class="video-container">
-                <div id="apollo-video-player"></div>
-            </div>
-            
-            <p class="max-w-3xl text-xl md:text-2xl text-gray-300 mt-8 mb-8">Kliko shenjën në hartën e Hënës më poshtë për të parë ku u ulën!</p>
-
-            <div class="w-full max-w-lg text-center">
-                <div id="moon-map-container" class="aspect-square rounded-full bg-gray-700 relative cursor-pointer mx-auto">
-                     <img id="moon-map-image" src="https://images.pexels.com/photos/47367/full-moon-moon-bright-sky-47367.jpeg"
-                          class="w-full h-full rounded-full object-cover"
-                          onerror="this.onerror=null; this.src='https://placehold.co/800x800/cccccc/ffffff?text=Harta+Alternative';"
-                          alt="Harta e Hënës që tregon zonën e uljes së Apollo 11"/>
-                     <img id="sea-of-tranquility-detail" src="https://media.invisioncic.com/g327141/monthly_2018_06/347888625_SabineandRittertheAragoDomesandtheApollo11landingsite.png.be53dcfecf5462798ad2c7b13457e0f9.png"
-                          class="w-full h-full rounded-full object-cover"
-                          onerror="this.onerror=null; this.src='https://placehold.co/800x800/777777/ffffff?text=Detaj+Alternative';"
-                          alt="Pamje e zmadhuar e Detit të Qetësisë"/>
-                    <div id="tranquility-marker-container" class="absolute top-[40%] left-[55%] transform -translate-x-1/2 -translate-y-1/2 cursor-pointer" onclick="zoomToTranquility()">
-                        <div class="pulse-marker w-10 h-10 rounded-full border-4 border-yellow-300 bg-yellow-300/50 flex items-center justify-center">
-                            <div class="w-2 h-2 rounded-full bg-yellow-100"></div>
-                        </div>
-                    </div>
-                </div>
-                <p id="moon-map-caption" class="image-caption">Harta e Hënës</p>
-            </div>
-        </section>
-
-        <section id="landing-site" class="section bg-gray-800">
-             <h2 class="fun-title mb-4">Deti i Qetësisë</h2>
-             <p class="max-w-2xl text-xl md:text-2xl text-gray-300 mb-8">Këtu u ulën ata! Mblodhën gurë hëne, bënë eksperimente dhe lanë gjurmët e para të këmbëve në Hënë.</p>
-             <div class="w-full max-w-4xl grid grid-cols-1 md:grid-cols-2 gap-8">
-                 <div class="bg-gray-700 p-4 rounded-2xl">
-                    <img src="https://scx1.b-cdn.net/csz/news/800a/2020/apollomoon.jpg" class="w-full h-auto rounded-lg object-cover aspect-[3/2]" onerror="this.onerror=null;this.src='https://placehold.co/600x400/cccccc/ffffff?text=Imazhi+i+Misionit+Apollo';" alt="Misioni Apollo 11 në Hënë">
-                    <p class="mt-4 font-bold text-xl">Një hap i vogël për njeriun...</p>
-                 </div>
-                 <div class="bg-gray-700 p-4 rounded-2xl">
-                    <img src="https://nssdc.gsfc.nasa.gov/imgcat/higher_res/apollo/as11_40_5878.jpg" class="w-full h-auto rounded-lg object-cover aspect-[3/2]" onerror="this.onerror=null;this.src='https://placehold.co/600x400/cccccc/ffffff?text=Imazhi+i+Gjurmës';" alt="Gjurmë këmbe në Hënë">
-                     <p class="mt-4 font-bold text-xl">...një hap gjigant për njerëzimin!</p>
-                 </div>
-             </div>
-        </section>
-        
-        <section id="noar-adventures" class="section bg-gray-900">
-            <h2 class="fun-title mb-8">Aventurat e Noarit në Hapësirë!</h2>
-            <p class="max-w-2xl text-xl md:text-2xl text-gray-300 mb-8">Shikoni disa nga fotot e mrekullueshme të Noarit duke eksploruar me teleskopin e tij dhe fotot që ka bërë!</p>
-            <div class="carousel-container">
-                <div class="carousel-track">
-                    </div>
-                <button class="carousel-button prev" onclick="manualCarouselChange(-1)">❮</button>
-                <button class="carousel-button next" onclick="manualCarouselChange(1)">❯</button>
-            </div>
-        </section>
-
-        <footer class="text-center p-8 bg-gray-900 border-t-0"> 
-            <h2 class="fun-title text-4xl mb-4">Faleminderit që Eksploruat! 🚀</h2>
-        </footer>
-    </main>
-    
-    <script async src="https://www.youtube.com/iframe_api"></script>
-    <script>
-        document.addEventListener('DOMContentLoaded', () => {
-            document.querySelectorAll('a[href^="#"]').forEach(anchor => {
-                anchor.addEventListener('click', function (e) {
-                    e.preventDefault();
-                    const targetElement = document.querySelector(this.getAttribute('href'));
-                    if (targetElement) {
-                        targetElement.scrollIntoView({ behavior: 'smooth' });
-                    }
-                });
-            });
-
-            const telescopeCanvasBtn = document.getElementById('telescope-canvas-btn');
-            if (telescopeCanvasBtn) {
-                telescopeCanvasBtn.addEventListener('click', startCanvasTelescopeAnimation);
-            }
-            initializeCanvasTelescope();
-
-
-            const phaseBtn = document.getElementById('phase-btn');
-            if (phaseBtn) {
-                phaseBtn.addEventListener('click', handleNextMoonPhase);
-            }
-            
-            updateMoonPhaseDisplay(); 
-            initializeCarousel();
-        });
-        
-        const lightFacts = {
-            sun: "Dielli është një yll gjigant! Drita e tij merr 8 minuta për të arritur tek ne.",
-            lamp: "Llampat përdorin energji elektrike për të bërë dritë që të mund të lexojmë natën.",
-            firefly: "Xixëllonjat bëjnë dritën e tyre. Quhet biolumineshencë!",
-            flashlight: "Elektrikët e dorës përdorin bateri për të bërë një rreze drite që mund ta drejtojmë."
-        };
-        
-        function toggleLightSource(element, source) {
-            document.querySelectorAll('.light-source-card').forEach(card => card.classList.remove('active'));
-            if (element) {
-                element.classList.add('active');
-            }
-            const factEl = document.getElementById('light-fact');
-            if (factEl) {
-                factEl.textContent = lightFacts[source] || "";
-            }
-        }
-
-        // Canvas Telescope Animation
-        let canvas, ctx;
-        let canvasAnimationProgress = 0;
-        let canvasAnimFrameId;
-        let canvasElements = {}; 
-        
-        const canvasObject = { xPercent: 0.08, yPercent: 0.5, radiusPercent: 0.04 }; // Source Moon
-        const objectiveLensDef = { xPercent: 0.30, yPercent: 0.5, widthPercent: 0.03, heightPercent: 0.6 };
-        const focalPointDef = { xPercent: 0.50, yPercent: 0.5 }; // Focal point clearly before eyepiece
-        const eyepieceLensDef = { xPercent: 0.65, yPercent: 0.5, widthPercent: 0.02, heightPercent: 0.4 }; // Eyepiece after focal point
-        const magnifiedObjectDef = { xPercent: 0.90, yPercent: 0.5, initialRadiusPercent: 0.04, magnifiedRadiusPercent: 0.10 }; // Slightly smaller magnified
-
-        const rayInitialOffsetYPercent = 0.12; // Wider initial separation for parallel rays
-        const rayDivergeSpreadFactor = 0.18; // Increased spread for diverging rays
-
-        function initializeCanvasTelescope() {
-            canvas = document.getElementById("telescopeCanvas");
-            if (!canvas) {
-                console.error("Canvas element not found for telescope animation.");
-                return;
-            }
-            ctx = canvas.getContext("2d");
-            
-            const container = document.getElementById('telescope-canvas-container');
-            if (!container) {
-                 console.error("Canvas container not found.");
-                 return;
-            }
-            canvas.width = container.clientWidth;
-            canvas.height = container.clientHeight;
-
-            canvasElements.labelSourceMoon = document.getElementById('label-canvas-source-moon');
-            canvasElements.labelObjectiveLens = document.getElementById('label-canvas-objective-lens');
-            canvasElements.labelEyepieceLens = document.getElementById('label-canvas-eyepiece-lens');
-            canvasElements.labelFocalPoint = document.getElementById('label-canvas-focal-point');
-            canvasElements.labelMagnifiedMoon = document.getElementById('label-canvas-magnified-moon');
-            
-            if(canvasElements.labelSourceMoon) {
-                canvasElements.labelSourceMoon.style.left = `${canvasObject.xPercent * canvas.width}px`;
-                canvasElements.labelSourceMoon.style.top = `${canvasObject.yPercent * canvas.height + (canvasObject.radiusPercent * canvas.height) + 10}px`;
-            }
-            if(canvasElements.labelObjectiveLens) {
-                canvasElements.labelObjectiveLens.style.left = `${objectiveLensDef.xPercent * canvas.width}px`;
-                canvasElements.labelObjectiveLens.style.top = `${objectiveLensDef.yPercent * canvas.height + (objectiveLensDef.heightPercent * canvas.height / 2) + 10}px`;
-            }
-            if(canvasElements.labelEyepieceLens) {
-                canvasElements.labelEyepieceLens.style.left = `${eyepieceLensDef.xPercent * canvas.width}px`;
-                canvasElements.labelEyepieceLens.style.top = `${eyepieceLensDef.yPercent * canvas.height + (eyepieceLensDef.heightPercent * canvas.height / 2) + 10}px`;
-            }
-            if(canvasElements.labelFocalPoint) {
-                canvasElements.labelFocalPoint.style.left = `${focalPointDef.xPercent * canvas.width}px`;
-                canvasElements.labelFocalPoint.style.top = `${focalPointDef.yPercent * canvas.height + 15}px`;
-            }
-             if(canvasElements.labelMagnifiedMoon) {
-                canvasElements.labelMagnifiedMoon.style.left = `${magnifiedObjectDef.xPercent * canvas.width}px`;
-                canvasElements.labelMagnifiedMoon.style.top = `${magnifiedObjectDef.yPercent * canvas.height + (magnifiedObjectDef.magnifiedRadiusPercent * canvas.height) + 10}px`;
-            }
-            drawStaticCanvasElements(); 
-        }
-
-        function drawStaticCanvasElements() {
+        function drawFinalTelescopeView() {
             if (!ctx || !canvas) return;
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            drawStaticCanvasElements(); 
+
+            const magnifiedX = magnifiedObjectDef.xPercent * canvas.width;
+            const magnifiedY = magnifiedObjectDef.yPercent * canvas.height;
+            const finalMagnifiedRadius = magnifiedObjectDef.magnifiedRadiusPercent * canvas.height;
 
             ctx.fillStyle = "#E0E0E0"; 
             ctx.beginPath();
-            ctx.arc(canvasObject.xPercent * canvas.width, canvasObject.yPercent * canvas.height, canvasObject.radiusPercent * canvas.height, 0, Math.PI * 2);
+            ctx.arc(magnifiedX, magnifiedY, finalMagnifiedRadius, 0, Math.PI * 2);
             ctx.fill();
-
-            ctx.fillStyle = "rgba(100, 150, 255, 0.4)";
-            ctx.beginPath(); 
-            ctx.ellipse(objectiveLensDef.xPercent * canvas.width, objectiveLensDef.yPercent * canvas.height, 
-                        objectiveLensDef.widthPercent * canvas.width, objectiveLensDef.heightPercent * canvas.height / 2, 
-                        0, 0, Math.PI * 2);
-            ctx.fill();
-
-            ctx.beginPath(); 
-            ctx.ellipse(eyepieceLensDef.xPercent * canvas.width, eyepieceLensDef.yPercent * canvas.height, 
-                        eyepieceLensDef.widthPercent * canvas.width, eyepieceLensDef.heightPercent * canvas.height / 2, 
-                        0, 0, Math.PI * 2);
-            ctx.fill();
-        }
-        
-        function drawAnimatedCanvasElements(progress) {
-            if (!ctx || !canvas) return;
-            drawStaticCanvasElements(); 
-            
-            ctx.strokeStyle = "#f6e05e"; 
-            ctx.lineWidth = 2;
-
-            const sourceX = canvasObject.xPercent * canvas.width;
-            const sourceY = canvasObject.yPercent * canvas.height;
-            const sourceRadius = canvasObject.radiusPercent * canvas.height;
-            
-            const objLensX = objectiveLensDef.xPercent * canvas.width;
-            const focalX = focalPointDef.xPercent * canvas.width;
-            const focalY = focalPointDef.yPercent * canvas.height;
-            const eyepieceX = eyepieceLensDef.xPercent * canvas.width;
-            const magnifiedX = magnifiedObjectDef.xPercent * canvas.width;
-            const magnifiedY = magnifiedObjectDef.yPercent * canvas.height;
-
-            const rayY1_at_source = sourceY - sourceRadius * 0.8; 
-            const rayY2_at_source = sourceY + sourceRadius * 0.8; 
-
-            const totalAnimationLength = magnifiedX - sourceX; 
-            const currentProgressLength = progress * totalAnimationLength;
-
-            // Phase 1: Parallel rays to objective lens
-            let endXPhase1 = Math.min(currentProgressLength, objLensX - sourceX);
-            if (endXPhase1 > 0) {
-                ctx.beginPath(); ctx.moveTo(sourceX, rayY1_at_source); ctx.lineTo(sourceX + endXPhase1, rayY1_at_source); ctx.stroke();
-                ctx.beginPath(); ctx.moveTo(sourceX, rayY2_at_source); ctx.lineTo(sourceX + endXPhase1, rayY2_at_source); ctx.stroke();
-            }
-            
-            // Phase 2: Converging rays from objective lens to focal point
-            const startPhase2Progress = objLensX - sourceX;
-            if (currentProgressLength > startPhase2Progress) {
-                const progressInPhase2 = currentProgressLength - startPhase2Progress;
-                const maxLenPhase2 = focalX - objLensX;
-                const currentLenPhase2 = Math.min(progressInPhase2, maxLenPhase2);
-                const factor2 = Math.min(progressInPhase2 / maxLenPhase2, 1);
-
-                if (currentLenPhase2 > 0) {
-                    ctx.beginPath(); ctx.moveTo(objLensX, rayY1_at_source); // Start from where parallel ray hit lens
-                    ctx.lineTo(objLensX + currentLenPhase2 * Math.cos(Math.atan2(focalY - rayY1_at_source, focalX - objLensX)), 
-                               rayY1_at_source + currentLenPhase2 * Math.sin(Math.atan2(focalY - rayY1_at_source, focalX - objLensX)));
-                    ctx.stroke();
-
-                    ctx.beginPath(); ctx.moveTo(objLensX, rayY2_at_source); // Start from where parallel ray hit lens
-                    ctx.lineTo(objLensX + currentLenPhase2 * Math.cos(Math.atan2(focalY - rayY2_at_source, focalX - objLensX)), 
-                               rayY2_at_source + currentLenPhase2 * Math.sin(Math.atan2(focalY - rayY2_at_source, focalX - objLensX)));
-                    ctx.stroke();
-                }
-                if (factor2 >= 0.95 && canvasElements.labelFocalPoint) canvasElements.labelFocalPoint.style.opacity = '1';
-            }
-
-            // Phase 3: Diverging rays from focal point through eyepiece
-            const startPhase3Progress = startPhase2Progress + (focalX - objLensX);
-            if (currentProgressLength > startPhase3Progress) {
-                const progressInPhase3 = currentProgressLength - startPhase3Progress;
-                const maxLenPhase3 = magnifiedX - focalX; 
-                const currentLenPhase3 = Math.min(progressInPhase3, maxLenPhase3);
-                const factor3 = Math.min(progressInPhase3 / maxLenPhase3, 1);
-
-                const spreadY = rayDivergeSpreadFactor * canvas.height * factor3;
-
-                if (currentLenPhase3 > 0) {
-                    ctx.beginPath(); ctx.moveTo(focalX, focalY);
-                    ctx.lineTo(focalX + currentLenPhase3 * Math.cos(Math.atan2(-spreadY, magnifiedX - focalX)), 
-                               focalY + currentLenPhase3 * Math.sin(Math.atan2(-spreadY, magnifiedX - focalX)));
-                    ctx.stroke();
-
-                    ctx.beginPath(); ctx.moveTo(focalX, focalY);
-                    ctx.lineTo(focalX + currentLenPhase3 * Math.cos(Math.atan2(spreadY, magnifiedX - focalX)), 
-                               focalY + currentLenPhase3 * Math.sin(Math.atan2(spreadY, magnifiedX - focalX)));
-                    ctx.stroke();
-                }
-
-                if (factor3 > 0.5) { 
-                    const currentRadius = magnifiedObjectDef.initialRadiusPercent * canvas.height + 
-                                       (magnifiedObjectDef.magnifiedRadiusPercent - magnifiedObjectDef.initialRadiusPercent) * canvas.height * Math.min((factor3 - 0.5)/0.5, 1) ;
-                    ctx.fillStyle = "#E0E0E0";
-                    ctx.beginPath();
-                    ctx.arc(magnifiedX, magnifiedY, currentRadius, 0, Math.PI * 2);
-                    ctx.fill();
-                    if (canvasElements.labelMagnifiedMoon) canvasElements.labelMagnifiedMoon.style.opacity = '1';
-                }
-            }
-        }
-        
-        function startCanvasTelescopeAnimationLoop() {
-            if (!ctx || !canvas) return;
-            drawAnimatedCanvasElements(canvasAnimationProgress);
-            
-            const totalAnimationDistance = 1; 
-            if (canvasAnimationProgress < totalAnimationDistance) {
-                canvasAnimationProgress += 0.008; // Slower animation speed
-                canvasAnimFrameId = requestAnimationFrame(startCanvasTelescopeAnimationLoop);
-            } else {
-                 if (canvasElements.labelFocalPoint) canvasElements.labelFocalPoint.style.opacity = '0'; 
-            }
-        }
-
-        function startCanvasTelescopeAnimation() {
-            if (canvasAnimFrameId) {
-                cancelAnimationFrame(canvasAnimFrameId);
-            }
-            canvasAnimationProgress = 0;
-            if(canvasElements.labelSourceMoon) canvasElements.labelSourceMoon.style.opacity = '1';
-            if(canvasElements.labelObjectiveLens) canvasElements.labelObjectiveLens.style.opacity = '1';
-            if(canvasElements.labelEyepieceLens) canvasElements.labelEyepieceLens.style.opacity = '1';
-            if(canvasElements.labelFocalPoint) canvasElements.labelFocalPoint.style.opacity = '0';
-            if(canvasElements.labelMagnifiedMoon) canvasElements.labelMagnifiedMoon.style.opacity = '0';
-            
-            startCanvasTelescopeAnimationLoop();
         }
 
 
@@ -1655,22 +950,6 @@
                     if (entry.isIntersecting) {
                         apolloVideoPlayer.playVideo();
                     } else {
-                        if (apolloVideoPlayer.getPlayerState && apolloVideoPlayer.getPlayerState() === YT.PlayerState.PLAYING) {
-                            apolloVideoPlayer.pauseVideo();
-                        }
-                    }
-                });
-            };
-
-            const videoObserver = new IntersectionObserver(observerCallback, observerOptions);
-            videoObserver.observe(videoContainer);
-        }
-
-    </script>
-</body>
-</html>
-
-} else {
                         if (apolloVideoPlayer.getPlayerState && apolloVideoPlayer.getPlayerState() === YT.PlayerState.PLAYING) {
                             apolloVideoPlayer.pauseVideo();
                         }
