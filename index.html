@@ -84,7 +84,7 @@
             opacity: 0;
             width: 0;
         }
-        .lens {
+        .lens { 
             background-color: #60a5fa;
             border-radius: 50%;
             opacity: 0.6;
@@ -151,7 +151,7 @@
         }
         .carousel-container {
             width: 100%;
-            max-width: 800px; 
+            max-width: 960px; 
             margin: 2rem auto;
             position: relative;
             overflow: hidden;
@@ -162,13 +162,13 @@
         }
         .carousel-slide {
             flex: 0 0 auto; 
-            width: 220px; 
+            width: 320px; 
             margin-right: 1rem; 
             box-sizing: border-box;
         }
         .carousel-slide img {
             width: 100%;
-            height: 150px; 
+            height: 200px; 
             object-fit: cover;
             border-radius: 0.75rem;
             box-shadow: 0 5px 15px rgba(0,0,0,0.2);
@@ -391,16 +391,20 @@
             }
         }
 
-        function animateTelescope() {
+        function animateTelescope() { 
             const ray1 = document.getElementById('ray1_path');
             const ray2 = document.getElementById('ray2_path');
             const magnifiedStar = document.getElementById('magnified-star');
 
-            if (!ray1 || !ray2 || !magnifiedStar) return;
+            if (!ray1 || !ray2 || !magnifiedStar) {
+                console.error("Elementë të animacionit të teleskopit mungojnë!");
+                return;
+            }
 
             ray1.style.transition = 'none';
             ray2.style.transition = 'none';
             magnifiedStar.style.opacity = '0';
+            magnifiedStar.style.transform = 'scale(1) translateY(-50%)'; 
             
             ray1.style.width = '0';
             ray1.style.opacity = '0';
@@ -436,8 +440,9 @@
             }, 800); 
 
             setTimeout(() => {
-                magnifiedStar.style.transition = 'opacity 0.5s ease-in-out';
+                magnifiedStar.style.transition = 'opacity 0.5s ease-in-out, transform 0.5s ease-in-out';
                 magnifiedStar.style.opacity = '1';
+                magnifiedStar.style.transform = 'scale(2.0) translateY(-50%)'; 
                 ray1.style.opacity = '0.1'; 
                 ray2.style.opacity = '0.1';
             }, 1800); 
@@ -527,13 +532,12 @@
         const carouselTrack = document.querySelector('.carousel-track');
         const carouselContainer = document.querySelector('.carousel-container');
         const placeholderImageSources = [
-            "https://placehold.co/440x300/334155/fde047?text=Noari+me+Teleskop",
-            "https://placehold.co/440x300/475569/facc15?text=Hëna+nga+Noari+1",
-            "https://placehold.co/440x300/52525b/eab308?text=Noari+Vëzhgues",
-            "https://placehold.co/440x300/1e293b/f59e0b?text=Hëna+nga+Noari+2",
-            "https://placehold.co/440x300/0f172a/e2e8f0?text=Noari+dhe+Kozmosi"
+            "images/noari_telescope1.jpeg",
+            "images/noari_telescope2.jpeg",
+            "images/hena_noari.jpeg",
+            "images/noari_telescope3.jpeg"
         ];
-        const slideWidth = 220; 
+        const slideWidth = 320; 
         const slideMargin = 16; 
         const totalSlideWidth = slideWidth + slideMargin;
         let currentTrackPosition = 0;
@@ -559,44 +563,61 @@
         function autoScrollCarousel() {
             if (!isCarouselPaused && carouselTrack) {
                 currentTrackPosition -= scrollSpeed;
+                // Check if scrolled past the first set of original images
                 if (currentTrackPosition <= -(totalSlideWidth * placeholderImageSources.length)) {
-                    currentTrackPosition = 0;
+                    currentTrackPosition += (totalSlideWidth * placeholderImageSources.length); // Jump back smoothly
+                    // To avoid transition on jump, temporarily remove it
+                    carouselTrack.style.transition = 'none';
+                    carouselTrack.style.transform = `translateX(${currentTrackPosition}px)`;
+                    // Force reflow to apply the jump immediately
+                    void carouselTrack.offsetWidth; 
+                    // Restore transition for next scroll steps
+                    carouselTrack.style.transition = 'transform 0.5s ease-in-out'; // Or remove if scrollSpeed is very low
+                } else {
+                    carouselTrack.style.transform = `translateX(${currentTrackPosition}px)`;
                 }
-                carouselTrack.style.transform = `translateX(${currentTrackPosition}px)`;
             }
             carouselAnimFrameId = requestAnimationFrame(autoScrollCarousel);
         }
         
         function manualCarouselChange(direction) {
             if (!carouselTrack) return;
+            isCarouselPaused = true; 
+            cancelAnimationFrame(carouselAnimFrameId);
+
             const numOriginalSlides = placeholderImageSources.length;
-            let currentEffectiveIndex = Math.round(-currentTrackPosition / totalSlideWidth);
-
-            currentEffectiveIndex += direction;
             
-            if (direction === 1 && currentTrackPosition - totalSlideWidth <= -(totalSlideWidth * numOriginalSlides * 2) + totalSlideWidth) {
-                currentTrackPosition = -(currentEffectiveIndex % numOriginalSlides) * totalSlideWidth;
-            } else if (direction === -1 && currentTrackPosition + totalSlideWidth > 0) {
-                 currentTrackPosition = -((currentEffectiveIndex % numOriginalSlides) + numOriginalSlides) * totalSlideWidth;
-            } else {
-                 currentTrackPosition -= direction * totalSlideWidth;
-            }
+            // Calculate current logical slide index based on currentTrackPosition
+            // This needs to be robust if currentTrackPosition isn't perfectly aligned.
+            // For simplicity, let's assume we are mostly aligned or it's okay to snap.
+            let currentLogicalSlide = Math.round(-currentTrackPosition / totalSlideWidth);
 
-            const maxTranslate = totalSlideWidth * numOriginalSlides;
-            if (Math.abs(currentTrackPosition) >= maxTranslate) {
-                currentTrackPosition = currentTrackPosition % maxTranslate;
-                 if (direction === 1 && currentTrackPosition === 0) {
-                 } else if (direction === -1 && currentTrackPosition !== 0) {
-                    currentTrackPosition -= maxTranslate;
-                 }
-            }
+            let targetLogicalSlide = currentLogicalSlide + direction;
 
+            // Update currentTrackPosition to the start of the target slide
+            // This helps in snapping and making sure the auto-scroll can resume reasonably.
+            currentTrackPosition = -(targetLogicalSlide * totalSlideWidth);
+
+            // Handle looping: If after manual change, we are outside the "first set" bounds,
+            // adjust currentTrackPosition to be within the duplicated set that maps to the first set.
+            const totalWidthOfOriginalSet = totalSlideWidth * numOriginalSlides;
+            if (currentTrackPosition < -totalWidthOfOriginalSet) { // Scrolled too far left (beyond duplicates)
+                currentTrackPosition = currentTrackPosition % totalWidthOfOriginalSet;
+            } else if (currentTrackPosition > 0) { // Scrolled too far right (into negative of duplicates)
+                currentTrackPosition = (currentTrackPosition % totalWidthOfOriginalSet) - totalWidthOfOriginalSet;
+                if (currentTrackPosition === 0 && direction === -1) currentTrackPosition = -totalWidthOfOriginalSet + totalSlideWidth; // special case for prev from first
+            }
+            
             carouselTrack.style.transition = 'transform 0.5s ease-in-out'; 
             carouselTrack.style.transform = `translateX(${currentTrackPosition}px)`;
             
             setTimeout(() => {
-                if (carouselTrack) carouselTrack.style.transition = 'none';
-            }, 500);
+                if (carouselTrack) carouselTrack.style.transition = 'none'; 
+                if (carouselContainer && !carouselContainer.matches(':hover')) { 
+                    isCarouselPaused = false;
+                    autoScrollCarousel();
+                }
+            }, 500); 
         }
 
         function initializeCarousel() {
@@ -604,14 +625,18 @@
             if (carouselContainer && carouselTrack) {
                 carouselContainer.addEventListener('mouseenter', () => {
                     isCarouselPaused = true;
+                    if (carouselAnimFrameId) cancelAnimationFrame(carouselAnimFrameId);
                 });
                 carouselContainer.addEventListener('mouseleave', () => {
                     isCarouselPaused = false;
+                    // Ensure transition is off for auto-scroll before starting
+                    if (carouselTrack) carouselTrack.style.transition = 'none';
+                    autoScrollCarousel(); 
                 });
                 autoScrollCarousel(); 
             }
         }
-
     </script>
 </body>
 </html>
+
