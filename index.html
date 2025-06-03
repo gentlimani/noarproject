@@ -207,7 +207,7 @@
             width: 90vw; 
             max-width: 400px; 
             aspect-ratio: 1 / 1; 
-            position: relative; /* Needed for z-index stacking of marker */
+            position: relative; 
         }
          @media (min-width: 768px) {
             #moon-map-container {
@@ -217,8 +217,8 @@
         #moon-map-image {
             transition: opacity 0.6s ease-out; 
             transform-origin: 55% 40%; 
-            position: relative; /* Ensure it's in the stacking context */
-            z-index: 1; /* Lower than marker */
+            position: relative; 
+            z-index: 1; 
         }
         
         #sea-of-tranquility-detail {
@@ -234,17 +234,16 @@
             transform-origin: 55% 40%; 
             transform: scale(1); 
             pointer-events: none; 
-            z-index: 2; /* Above main map image when visible */
+            z-index: 2; 
         }
         #sea-of-tranquility-detail.visible-zoomed {
             opacity: 1;
             transform: scale(3); 
             pointer-events: auto; 
         }
-        #tranquility-marker-container { /* Ensure marker is on top */
+        #tranquility-marker-container { 
             position: absolute;
-            /* top, left, transform already set via Tailwind */
-            z-index: 3; /* Highest z-index */
+            z-index: 3; 
             cursor: pointer;
         }
         .image-caption {
@@ -485,7 +484,7 @@
                           class="w-full h-full rounded-full object-cover"
                           onerror="this.onerror=null; this.src='https://placehold.co/800x800/777777/ffffff?text=Detaj+Alternative';"
                           alt="Pamje e zmadhuar e Detit të Qetësisë"/>
-                    <div id="tranquility-marker-container" class="absolute top-[40%] left-[55%] transform -translate-x-1/2 -translate-y-1/2 cursor-pointer">
+                    <div id="tranquility-marker-container" class="absolute top-[40%] left-[55%] transform -translate-x-1/2 -translate-y-1/2">
                         <div class="pulse-marker w-8 h-8 sm:w-10 sm:h-10 rounded-full border-4 border-yellow-300 bg-yellow-300/50 flex items-center justify-center">
                             <div class="w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full bg-yellow-100"></div>
                         </div>
@@ -589,6 +588,14 @@
             const askMoonBtn = document.getElementById('ask-moon-btn');
             if (askMoonBtn) {
                 askMoonBtn.addEventListener('click', askMoon);
+            }
+            
+            const markerContainer = document.getElementById('tranquility-marker-container');
+            if (markerContainer) {
+                console.log("Marker container found, attaching click listener.");
+                markerContainer.addEventListener('click', zoomToTranquility);
+            } else {
+                console.error("Marker container NOT found.");
             }
         });
         
@@ -852,7 +859,7 @@
             { emoji: '🌕', name: 'Hëna e Plotë', angle: 90 },
             { emoji: '🌖', name: 'Gunga Zbritëse', angle: 135 },
             { emoji: '🌗', name: 'Çereku i Fundit', angle: 180 }, 
-            { emoji: '🌘', name: 'Draperi Zbritës', angle: 225 },
+            { emoji: '�', name: 'Draperi Zbritës', angle: 225 },
             { emoji: '🌑', name: 'Hëna e Re', angle: 270 },
             { emoji: '🌒', name: 'Draperi Rritës', angle: 315 }
         ];
@@ -1124,7 +1131,7 @@
 
             let chatHistory = [{ role: "user", parts: [{ text: promptText }] }];
             const payload = { contents: chatHistory };
-            const apiKey = "AIzaSyDP07kTDtv5nG0ubYfks-HJo1DH95D9dwg"; 
+            const apiKey = "AIzaSyDP07kTDtv5nG0ubYfks-HJo1DH95D9dwg"; // API KEY HERE
             const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`;
 
             try {
@@ -1185,3 +1192,4 @@
     </script>
 </body>
 </html>
+�
