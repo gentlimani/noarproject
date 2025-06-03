@@ -335,19 +335,22 @@
                 right: -10px; 
             }
         }
-        .gemini-output {
+        .ai-output { 
             margin-top: 1.5rem;
             padding: 1rem;
             background-color: rgba(45, 55, 72, 0.5); 
             border-radius: 0.75rem;
-            max-width: 90%; /* Max width relative to its parent */
-            margin-left: auto; /* Center the block */
-            margin-right: auto; /* Center the block */
+            max-width: 90%;
+            sm:max-width: 80%;
+            md:max-width: 70%;
+            lg:max-w-3xl;
             text-align: left;
             min-height: 100px;
             border: 1px solid #4a5568;
+            margin-left: auto; 
+            margin-right: auto;
         }
-        .gemini-input {
+        .ai-input { 
             width: 100%;
             max-width: 500px;
             padding: 0.75rem;
@@ -356,18 +359,6 @@
             background-color: #2d3748; 
             color: #f7fafc;
             margin-bottom: 1rem;
-        }
-        .loading-spinner {
-            border: 4px solid rgba(243, 244, 246, 0.1); 
-            border-left-color: #f6e05e; 
-            border-radius: 50%;
-            width: 24px;
-            height: 24px;
-            animation: spin 1s linear infinite;
-            margin: 0.5rem auto;
-        }
-        @keyframes spin {
-            to { transform: rotate(360deg); }
         }
         /* Quiz Section Styles */
         #quiz-question {
@@ -437,7 +428,7 @@
             </div>
             <div id="light-fact" class="mt-8 text-xl sm:text-2xl h-12 text-orange-400 font-bold"></div>
             <button id="generate-light-story-btn" class="fun-button gemini-btn mt-8">✨ Krijo një Tregim për Dritën!</button>
-            <div id="light-story-output" class="gemini-output hidden"></div>
+            <div id="light-story-output" class="ai-output hidden"></div>
         </section>
 
         <section id="telescope" class="section">
@@ -474,9 +465,9 @@
                 </div>
             </div>
             <div class="mt-10 w-full max-w-xl">
-                <input type="text" id="moon-question-input" class="gemini-input" placeholder="Shtyp pyetjen tënde për Hënën këtu...">
+                <input type="text" id="moon-question-input" class="ai-input" placeholder="Shtyp pyetjen tënde për Hënën këtu...">
                 <button id="ask-moon-btn" class="fun-button gemini-btn">✨ Pyet Hënën Diçka!</button>
-                <div id="moon-answer-output" class="gemini-output hidden mt-4"></div>
+                <div id="moon-answer-output" class="ai-output hidden mt-4"></div>
             </div>
         </section>
 
@@ -821,17 +812,14 @@
                 canvasAnimationProgress += 0.008; 
                 canvasAnimFrameId = requestAnimationFrame(startCanvasTelescopeAnimationLoop);
             } else {
-                drawFinalTelescopeView(); 
-                if (canvasElements.labelFocalPoint) canvasElements.labelFocalPoint.style.opacity = '0'; 
+                // Animation complete, keep final frame visible
+                drawAnimatedCanvasElements(1); 
+                if (canvasElements.labelFocalPoint) canvasElements.labelFocalPoint.style.opacity = '1'; 
                 if (canvasElements.labelMagnifiedMoon) canvasElements.labelMagnifiedMoon.style.opacity = '1';
-                
-                setTimeout(() => {
-                    resetCanvasToInitialState();
-                }, 2000); 
             }
         }
         
-        function resetCanvasToInitialState() {
+        function resetCanvasToInitialState() { 
             if (!ctx || !canvas) return;
             if (canvasAnimFrameId) {
                 cancelAnimationFrame(canvasAnimFrameId);
@@ -851,30 +839,21 @@
             if (canvasAnimFrameId) { 
                 cancelAnimationFrame(canvasAnimFrameId);
             }
+            resetCanvasToInitialState(); // Reset before starting
             canvasAnimationProgress = 0; 
+            
+            // Ensure static labels are visible from the start of animation
             if(canvasElements.labelSourceMoon) canvasElements.labelSourceMoon.style.opacity = '1';
             if(canvasElements.labelObjectiveLens) canvasElements.labelObjectiveLens.style.opacity = '1';
             if(canvasElements.labelEyepieceLens) canvasElements.labelEyepieceLens.style.opacity = '1';
-            if(canvasElements.labelFocalPoint) canvasElements.labelFocalPoint.style.opacity = '0';
-            if(canvasElements.labelMagnifiedMoon) canvasElements.labelMagnifiedMoon.style.opacity = '0';
+            if(canvasElements.labelFocalPoint) canvasElements.labelFocalPoint.style.opacity = '0'; // Hide until rays meet
+            if(canvasElements.labelMagnifiedMoon) canvasElements.labelMagnifiedMoon.style.opacity = '0'; // Hide until image appears
             
             startCanvasTelescopeAnimationLoop();
         }
 
-        function drawFinalTelescopeView() {
-            if (!ctx || !canvas) return;
-            drawStaticCanvasElements(); 
-
-            const magnifiedX = magnifiedObjectDef.xPercent * canvas.width;
-            const magnifiedY = magnifiedObjectDef.yPercent * canvas.height;
-            const finalMagnifiedRadius = magnifiedObjectDef.magnifiedRadiusPercent * canvas.height;
-
-            ctx.fillStyle = "#E0E0E0"; 
-            ctx.beginPath();
-            ctx.arc(magnifiedX, magnifiedY, finalMagnifiedRadius, 0, Math.PI * 2);
-            ctx.fill();
-        }
-
+        // drawFinalTelescopeView is effectively handled by letting the animation loop complete
+        // and then startCanvasTelescopeAnimation will reset it on next click.
 
         let moonPhaseIndex = 0; 
         const moonPhasesData = [
@@ -883,7 +862,7 @@
             { emoji: '🌕', name: 'Hëna e Plotë', angle: 90 },
             { emoji: '🌖', name: 'Gunga Zbritëse', angle: 135 },
             { emoji: '🌗', name: 'Çereku i Fundit', angle: 180 }, 
-            { emoji: '?', name: 'Draperi Zbritës', angle: 225 },
+            { emoji: '🌘', name: 'Draperi Zbritës', angle: 225 }, 
             { emoji: '🌑', name: 'Hëna e Re', angle: 270 },
             { emoji: '🌒', name: 'Draperi Rritës', angle: 315 }
         ];
@@ -952,7 +931,7 @@
                         landingSiteSection.scrollIntoView({ behavior: 'smooth' });
                         console.log("Scrolling to landing site.");
                     }
-                }, 1600); 
+                }, 2500); 
 
                 setTimeout(() => {
                     moonMapImage.style.opacity = '1'; 
@@ -1136,81 +1115,69 @@
             videoObserver.observe(videoContainer);
         }
 
-        // Gemini API Functions
-        async function callGeminiAPI(promptText) {
-            const lightStoryOutput = document.getElementById('light-story-output');
-            const moonAnswerOutput = document.getElementById('moon-answer-output');
-            let targetOutputElement;
-
-            if (lightStoryOutput && lightStoryOutput.classList.contains('active-gemini-output')) {
-                targetOutputElement = lightStoryOutput;
-            } else if (moonAnswerOutput && moonAnswerOutput.classList.contains('active-gemini-output')) {
-                targetOutputElement = moonAnswerOutput;
-            }
-
-            if (targetOutputElement) {
-                targetOutputElement.classList.remove('hidden');
-                targetOutputElement.innerHTML = '<div class="loading-spinner"></div><p class="text-center">Duke gjeneruar...</p>';
-            }
-
-            let chatHistory = [{ role: "user", parts: [{ text: promptText }] }];
-            const payload = { contents: chatHistory };
-            const apiKey = "AIzaSyDP07kTDtv5nG0ubYfks-HJo1DH95D9dwg"; // API KEY HERE
-            const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`;
-
-            try {
-                const response = await fetch(apiUrl, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(payload)
-                });
-                const result = await response.json();
-
-                if (targetOutputElement) {
-                    if (result.candidates && result.candidates.length > 0 &&
-                        result.candidates[0].content && result.candidates[0].content.parts &&
-                        result.candidates[0].content.parts.length > 0) {
-                        const text = result.candidates[0].content.parts[0].text;
-                        targetOutputElement.innerHTML = `<p>${text.replace(/\n/g, '<br>')}</p>`;
-                    } else {
-                        targetOutputElement.innerHTML = '<p class="text-red-400">Pati një problem gjatë gjenerimit të përgjigjes. Ju lutem provoni përsëri.</p>';
-                        console.error("Gemini API response error:", result);
-                    }
-                }
-            } catch (error) {
-                console.error("Error calling Gemini API:", error);
-                if (targetOutputElement) {
-                    targetOutputElement.innerHTML = '<p class="text-red-400">Pati një problem me lidhjen. Ju lutem provoni përsëri.</p>';
-                }
-            } finally {
-                if (lightStoryOutput) lightStoryOutput.classList.remove('active-gemini-output');
-                if (moonAnswerOutput) moonAnswerOutput.classList.remove('active-gemini-output');
-            }
-        }
+        // "Fake" AI Functions
+        const lightStories = [
+            "Njëherë e një kohë, në një galaktikë shumë të largët, jetonte një yll i vogël i quajtur Lumen. Lumen ishte plot me dritë të artë dhe ëndrra e tij më e madhe ishte të ndriçonte një planet të vogël blu që e shihte nga larg. Çdo mëngjes, Lumen merrte frymë thellë dhe lëshonte rrezet e tij të para, si shigjeta të arta, që vraponin nëpër errësirën e hapësirës. Kur arrinin në planetin blu, ato zgjonin lulet, i jepnin ngrohtësi kafshëve dhe i ndihmonin fëmijët të shihnin rrugën për në shkollë. Drita e Lumenit ishte si një përqafim i ngrohtë për të gjithë!",
+            "Drita është si një piktore magjike! Imagjino që ajo ka një kuti plot me ngjyra vezulluese. Kur kalon përmes pikave të shiut, ajo pikturon një ylber të mrekullueshëm në qiell. Kur prek një flluskë sapuni, ajo e bën të shkëlqejë me të gjitha ngjyrat e ylberit. Dhe kur ti sheh veten në pasqyrë, është Drita ajo që kërcente nga fytyra jote, tek pasqyra, dhe pastaj përsëri tek sytë e tu, duke të lejuar të shohësh buzëqeshjen tënde!",
+            "Në një pyll të errët, jetonte një xixëllonjë e vogël e quajtur Pip. Pipi kishte një dritë të vogël në bishtin e saj, por ishte shumë e turpshme për ta treguar. Një natë, një ketër i vogël humbi rrugën. Pipi mori guximin, ndezi dritën e saj të vogël dhe e ndihmoi ketrin të gjente familjen e tij. Që nga ajo ditë, Pipi e kuptoi se edhe drita më e vogël mund të bëjë një ndryshim të madh dhe të ndriçojë errësirën.",
+            "A e dije se drita nga Dielli udhëton shumë, shumë shpejt për të ardhur tek ne? Është si një makinë garash super e shpejtë, por shumë herë më e shpejtë se çdo makinë që ke parë! I duhen vetëm 8 minuta dritës së Diellit për të përshkuar gjithë atë rrugë të gjatë nga Dielli deri tek Toka. Kështu, kur ti sheh Diellin, ti po sheh dritën që u nis nga ai 8 minuta më parë!",
+            "Drita nuk është vetëm për të parë, por edhe për të na mbajtur ngrohtë! Rrezet e Diellit sjellin ngrohtësi në Tokë, duke bërë që bimët të rriten dhe ne të ndihemi mirë kur luajmë jashtë. Edhe llambat në shtëpinë tënde lëshojnë pak ngrohtësi bashkë me dritën. Drita është një mike e fuqishme dhe e ngrohtë!",
+            "Kur ti ndez një elektrik dore në errësirë, drita del si një shpatë e ndritshme, duke prerë errësirën dhe duke të treguar se çfarë ka përreth. Ajo udhëton në vija të drejta derisa të përplaset me diçka, si muri apo një lodër. Kjo është arsyeja pse mund të bësh hije me duart e tua – sepse ti e bllokon rrugën e dritës!"
+        ];
+        let currentLightStoryIndex = 0;
 
         function generateLightStory() {
             const lightStoryOutput = document.getElementById('light-story-output');
-            if (lightStoryOutput) lightStoryOutput.classList.add('active-gemini-output');
-            const prompt = "Krijo një histori të shkurtër dhe imagjinare për fëmijë (rreth 100-150 fjalë) se si drita udhëton dhe na ndihmon të shohim botën. Përdor një gjuhë të thjeshtë dhe argëtuese.";
-            callGeminiAPI(prompt);
+            if (lightStoryOutput) {
+                lightStoryOutput.classList.remove('hidden');
+                lightStoryOutput.innerHTML = `<p>${lightStories[currentLightStoryIndex]}</p>`;
+                currentLightStoryIndex = (currentLightStoryIndex + 1) % lightStories.length;
+            }
         }
+        
+        const specificMoonAnswers = {
+            "cka eshte hena": "Unë jam Hëna! Jam një top i madh shkëmbor që rrotullohem rreth planetit tuaj të bukur, Tokës. Nuk kam dritën time, por shkëlqej kur Dielli më ndriçon!",
+            "si eshte krijuar hena": "Shkencëtarët mendojnë se shumë kohë më parë, një planet gjigant sa Marsi u përplas me Tokën! Nga kjo përplasje e madhe, u krijova unë, Hëna, nga copat që fluturuan në hapësirë.",
+            "sa e madhe eshte hena": "Jam goxha e madhe! Diametri im është rreth 3,474 kilometra. Kjo do të thotë që nëse do të mund të ecje rreth ekuatorit tim, do të bëje një udhëtim shumë të gjatë!",
+            "sa eshte distanca e henes nga toka": "Jam mjaft larg! Mesatarisht, jam rreth 384,400 kilometra larg Tokës. Është aq larg sa mund të vendosësh 30 planete Toka njëra pas tjetrës mes nesh!"
+        };
+
+        const genericMoonAnswers = [
+            "A e dije se unë nuk kam atmosferë si Toka? Kjo do të thotë që nuk ka erë apo mot tek unë, dhe gjurmët e këmbëve të astronautëve që më vizituan do të qëndrojnë aty për miliona vjet!",
+            "Unë kam 'dete' por ato nuk janë me ujë! Janë fusha të mëdha, të errëta, të formuara nga llava vullkanike shumë kohë më parë. Astronautët e Apollo 11 u ulën në njërin prej tyre, Detin e Qetësisë.",
+            "Unë i shkaktoj baticat dhe zbaticat në oqeanet e Tokës! Forca ime e gravitetit tërheq ujin, duke bërë që ai të ngrihet dhe të ulet.",
+            "Nga Toka, ju gjithmonë shihni të njëjtën anë timen! Kjo ndodh sepse unë rrotullohem rreth vetes me të njëjtën shpejtësi me të cilën rrotullohem rreth Tokës.",
+            "Kam shumë kratere! Ato janë krijuar nga përplasjet e meteoritëve dhe asteroidëve gjatë miliarda viteve.",
+            "Ndonjëherë më quajnë 'Selena' ose 'Luna'. Janë emra të bukur, apo jo?"
+        ];
+        let currentGenericMoonAnswerIndex = 0;
 
         function askMoon() {
             const moonQuestionInput = document.getElementById('moon-question-input');
             const moonAnswerOutput = document.getElementById('moon-answer-output');
-            if (!moonQuestionInput || !moonAnswerOutput) return;
+            if (!moonAnswerOutput) return;
 
-            const question = moonQuestionInput.value.trim();
-            if (!question) {
-                moonAnswerOutput.classList.remove('hidden');
-                moonAnswerOutput.innerHTML = '<p class="text-yellow-400">Ju lutem shtypni një pyetje për Hënën!</p>';
-                return;
+            const question = moonQuestionInput.value.trim().toLowerCase().replace(/[^\w\s]/gi, '');
+            moonAnswerOutput.classList.remove('hidden');
+            let foundSpecificAnswer = false;
+
+            if (question) { // Only check specific answers if user typed something
+                for (const key in specificMoonAnswers) {
+                    // Check if the user's question *contains* the key phrase
+                    if (question.includes(key.replace(/[^\w\s]/gi, ''))) { 
+                        moonAnswerOutput.innerHTML = `<p>${specificMoonAnswers[key]}</p>`;
+                        foundSpecificAnswer = true;
+                        break;
+                    }
+                }
+            }
+
+            if (!foundSpecificAnswer) { // If no specific question matched or input was empty
+                moonAnswerOutput.innerHTML = `<p>${genericMoonAnswers[currentGenericMoonAnswerIndex]}</p>`;
+                currentGenericMoonAnswerIndex = (currentGenericMoonAnswerIndex + 1) % genericMoonAnswers.length;
             }
             
-            moonAnswerOutput.classList.add('active-gemini-output');
-            const prompt = `Përgjigju kësaj pyetjeje sikur të ishe Hëna duke folur me një fëmijë 8-vjeçar. Pyetja është: "${question}". Përgjigja duhet të jetë e shkurtër, argëtuese dhe e kuptueshme për një fëmijë.`;
-            callGeminiAPI(prompt);
-            moonQuestionInput.value = ''; 
+            if(moonQuestionInput) moonQuestionInput.value = ''; 
         }
 
         // Quiz Section Logic
@@ -1365,3 +1332,4 @@
     </script>
 </body>
 </html>
+
