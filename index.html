@@ -340,10 +340,9 @@
             padding: 1rem;
             background-color: rgba(45, 55, 72, 0.5); 
             border-radius: 0.75rem;
-            max-width: 90%;
-            sm:max-width: 80%;
-            md:max-width: 70%;
-            lg:max-w-3xl;
+            max-width: 90%; /* Max width relative to its parent */
+            margin-left: auto; /* Center the block */
+            margin-right: auto; /* Center the block */
             text-align: left;
             min-height: 100px;
             border: 1px solid #4a5568;
@@ -370,6 +369,22 @@
         @keyframes spin {
             to { transform: rotate(360deg); }
         }
+        /* Quiz Section Styles */
+        #quiz-question {
+            font-size: 1.25rem; /* Tailwind text-xl */
+            color: #facc15; /* Tailwind yellow-500 */
+            margin-bottom: 1.5rem;
+            min-height: 3em; /* Ensure space for question */
+        }
+        #quiz-answer {
+            font-size: 1.125rem; /* Tailwind text-lg */
+            color: #93c5fd; /* Tailwind blue-300 */
+            background-color: rgba(45, 55, 72, 0.3);
+            padding: 0.75rem;
+            border-radius: 0.5rem;
+            margin-top: 1rem;
+            min-height: 2.5em; /* Ensure space for answer */
+        }
     </style>
 </head>
 <body class="overflow-x-hidden">
@@ -387,6 +402,7 @@
         <a href="#moon" title="Hëna">🌙</a>
         <a href="#apollo" title="Apollo 11">🚀</a>
         <a href="#noar-adventures" title="Aventurat e Noarit">🖼️</a>
+        <a href="#quiz-section" title="Kuizi">❓</a>
     </nav>
 
     <main id="main-content">
@@ -520,6 +536,16 @@
             </div>
         </section>
 
+        <section id="quiz-section" class="section bg-gray-800">
+            <h2 class="fun-title mb-8">Kuizi i Hapësirës!</h2>
+            <div class="w-full max-w-2xl p-6 bg-gray-700 rounded-xl shadow-xl">
+                <div id="quiz-question" class="text-2xl text-yellow-400 mb-6 min-h-[60px]">Duke u ngarkuar pyetja...</div>
+                <div id="quiz-answer" class="text-xl text-blue-300 hidden mt-4 min-h-[50px]"></div>
+                <div id="quiz-timer" class="text-lg text-gray-400 mt-4 mb-2">Koha e mbetur: <span id="time-left">15</span>s</div>
+                <button id="next-question-btn" class="fun-button mt-6">Pyetja Tjetër</button>
+            </div>
+        </section>
+
         <footer class="text-center p-8 bg-gray-900 border-t-0"> 
             <h2 class="fun-title text-3xl sm:text-4xl mb-4">Faleminderit që Eksploruat! 🚀</h2>
         </footer>
@@ -580,6 +606,7 @@
             
             updateMoonPhaseDisplay(); 
             initializeCarousel();
+            initializeQuiz();
 
             const generateLightStoryBtn = document.getElementById('generate-light-story-btn');
             if (generateLightStoryBtn) {
@@ -592,10 +619,7 @@
             
             const markerContainer = document.getElementById('tranquility-marker-container');
             if (markerContainer) {
-                console.log("Marker container found, attaching click listener.");
                 markerContainer.addEventListener('click', zoomToTranquility);
-            } else {
-                console.error("Marker container NOT found.");
             }
         });
         
@@ -859,7 +883,7 @@
             { emoji: '🌕', name: 'Hëna e Plotë', angle: 90 },
             { emoji: '🌖', name: 'Gunga Zbritëse', angle: 135 },
             { emoji: '🌗', name: 'Çereku i Fundit', angle: 180 }, 
-            { emoji: '�', name: 'Draperi Zbritës', angle: 225 },
+            { emoji: '?', name: 'Draperi Zbritës', angle: 225 },
             { emoji: '🌑', name: 'Hëna e Re', angle: 270 },
             { emoji: '🌒', name: 'Draperi Rritës', angle: 315 }
         ];
@@ -1189,7 +1213,155 @@
             moonQuestionInput.value = ''; 
         }
 
+        // Quiz Section Logic
+        const quizData = [
+            { question: "Nga vjen drita kryesore që ndriçon Tokën tonë?", answer: "Nga Dielli!" },
+            { question: "Si quhet mjeti që përdorim për të parë Hënën dhe yjet më afër?", answer: "Teleskopi!" },
+            { question: "A e ndryshon Hëna formën e saj vërtet?", answer: "Jo, ajo që ne shohim është vetëm pjesa e ndriçuar nga Dielli!" },
+            { question: "Si quhej misioni i parë që uli njerëzit në Hënë?", answer: "Apollo 11!" },
+            { question: "Në cilin 'det' në Hënë u ulën astronautët e Apollo 11?", answer: "Në Detin e Qetësisë!" }
+        ];
+        let currentQuestionIndex = 0;
+        let quizTimerInterval;
+        let timeLeft = 15; 
+        let quizObserver; 
+        let quizSectionVisible = false; 
+        let quizCompleted = false; 
+
+        function initializeQuiz() {
+            const nextQuestionBtn = document.getElementById('next-question-btn');
+            if (nextQuestionBtn) {
+                nextQuestionBtn.addEventListener('click', () => {
+                    if (quizTimerInterval) clearInterval(quizTimerInterval); 
+                    showNextQuizQuestion();
+                });
+            }
+            setupQuizObserver();
+        }
+        
+        function startQuizTimer() {
+            const timerDisplay = document.getElementById('time-left');
+            const timerContainer = document.getElementById('quiz-timer');
+
+            if (!timerDisplay || !timerContainer || !quizSectionVisible || quizCompleted) { 
+                 if (quizTimerInterval) clearInterval(quizTimerInterval);
+                 if (quizCompleted && timerContainer) timerContainer.classList.add('hidden');
+                return;
+            }
+
+            timerContainer.classList.remove('hidden');
+            timeLeft = 15; 
+            timerDisplay.textContent = timeLeft;
+            
+            if (quizTimerInterval) clearInterval(quizTimerInterval); 
+
+            quizTimerInterval = setInterval(() => {
+                if (!quizSectionVisible || quizCompleted) { 
+                    clearInterval(quizTimerInterval);
+                    return;
+                }
+                timeLeft--;
+                timerDisplay.textContent = timeLeft;
+                if (timeLeft <= 0) {
+                    clearInterval(quizTimerInterval);
+                    showQuizAnswer();
+                }
+            }, 1000);
+        }
+
+        function showNextQuizQuestion() {
+            const questionEl = document.getElementById('quiz-question');
+            const answerEl = document.getElementById('quiz-answer');
+            const nextBtn = document.getElementById('next-question-btn');
+            const timerContainer = document.getElementById('quiz-timer');
+
+
+            if (!questionEl || !answerEl || !nextBtn || !timerContainer) return;
+
+            if (nextBtn.textContent === "Rifillo Kuizin") { 
+                currentQuestionIndex = 0;
+            }
+            quizCompleted = false; 
+
+            answerEl.classList.add('hidden');
+            answerEl.textContent = '';
+            nextBtn.disabled = true;
+            nextBtn.classList.add('opacity-50', 'cursor-not-allowed');
+
+            if (currentQuestionIndex >= quizData.length) {
+                quizCompleted = true; 
+                questionEl.textContent = "Kuizi përfundoi! Shpresojmë të keni mësuar gjëra të reja!";
+                nextBtn.textContent = "Rifillo Kuizin";
+                if (quizTimerInterval) clearInterval(quizTimerInterval);
+                timerContainer.classList.add('hidden'); 
+                nextBtn.disabled = false;
+                nextBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+                return;
+            }
+            
+            timerContainer.classList.remove('hidden'); 
+            nextBtn.textContent = "Pyetja Tjetër";
+            questionEl.textContent = quizData[currentQuestionIndex].question;
+            
+            if(quizSectionVisible) { 
+                startQuizTimer();
+            } else { 
+                 document.getElementById('time-left').textContent = 15;
+            }
+        }
+
+        function showQuizAnswer() {
+            const answerEl = document.getElementById('quiz-answer');
+            const nextBtn = document.getElementById('next-question-btn');
+            const timerContainer = document.getElementById('quiz-timer');
+
+            if (!answerEl || !nextBtn || !timerContainer) return;
+            
+            if (quizTimerInterval) clearInterval(quizTimerInterval); 
+            timerContainer.classList.add('hidden'); 
+            answerEl.textContent = `Përgjigja: ${quizData[currentQuestionIndex].answer}`;
+            answerEl.classList.remove('hidden');
+            
+            currentQuestionIndex++;
+            nextBtn.disabled = false;
+            nextBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+        }
+
+        function setupQuizObserver() {
+            const quizSection = document.getElementById('quiz-section');
+            if (!quizSection) return;
+
+            const observerOptions = {
+                root: null,
+                rootMargin: '0px',
+                threshold: 0.1 
+            };
+
+            quizObserver = new IntersectionObserver((entries) => {
+                entries.forEach(entry => {
+                    quizSectionVisible = entry.isIntersecting;
+                    if (entry.isIntersecting) {
+                        if (quizCompleted) { 
+                             document.getElementById('quiz-timer').classList.add('hidden');
+                             return; 
+                        }
+                        if(document.getElementById('quiz-question').textContent === "Duke u ngarkuar pyetja..." || 
+                           (document.getElementById('next-question-btn').textContent === "Rifillo Kuizin" && currentQuestionIndex === 0) ){
+                            showNextQuizQuestion(); 
+                        } 
+                        else if (document.getElementById('quiz-answer').classList.contains('hidden') && !quizCompleted) {
+                           startQuizTimer(); 
+                        }
+                    } else {
+                        if (quizTimerInterval) {
+                            clearInterval(quizTimerInterval); 
+                        }
+                    }
+                });
+            }, observerOptions);
+            quizObserver.observe(quizSection);
+        }
+
     </script>
 </body>
 </html>
-�
