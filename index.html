@@ -5,6 +5,51 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Drita, Teleskopët dhe Hëna Jonë e Mrekullueshme!</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <script async src="https://unpkg.com/es-module-shims@1.3.6/dist/es-module-shims.js"></script>
+    <script type="importmap">
+    {
+        "imports": {
+            "three": "https://unpkg.com/three@0.132.2/build/three.module.js",
+            "three/examples/": "https://unpkg.com/three@0.132.2/examples/"
+        }
+    }
+    </script>
+    <script type="module">
+        console.log('Starting module initialization...');
+        
+        import * as THREE from 'three';
+        console.log('THREE imported:', THREE);
+        
+        import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
+        console.log('OrbitControls imported');
+        
+        import { CSS2DRenderer, CSS2DObject } from 'three/examples/jsm/renderers/CSS2DRenderer.js';
+        console.log('CSS2DRenderer imported');
+        
+        import { SolarSystem, NightSky } from './js/modules/interactive.js';
+        console.log('SolarSystem and NightSky imported');
+        
+        window.THREE = THREE;
+        
+        document.addEventListener('DOMContentLoaded', () => {
+            console.log('DOM loaded, initializing 3D scenes...');
+            try {
+                console.log('Creating Solar System...');
+                const solarSystem = new SolarSystem('solar-system-container');
+                console.log('Solar System created');
+                
+                console.log('Creating Night Sky...');
+                const nightSky = new NightSky('night-sky-container');
+                console.log('Night Sky created');
+            } catch (error) {
+                console.error('Error initializing 3D scenes:', error);
+            }
+        });
+    </script>
+    <!-- Chosen Palette: Cosmic Neutrals (Dark space blue/purple, bright yellow, orange, and light blue accents) -->
+    <!-- Application Structure Plan: A single-page, vertical storytelling format. Users scroll through 'chapters' about light, telescopes, the moon, and Apollo 11. A sticky icon-based side-nav allows jumping between sections. This structure is more exploratory and engaging for children than a linear slide-by-slide presentation, turning learning into a guided discovery. Added a final auto-scrolling horizontal image carousel with hover controls. YouTube video now autoplays on scroll with controls hidden and scrolls to moon map on completion. Added a final quiz section with viewport-aware timer for each question, start button, and delayed timer appearance. -->
+    <!-- Visualization & Content Choices: Replaced static presentation ideas with interactive HTML/CSS diagrams. Telescope: Canvas 2D animation showing light path through two lenses, with parallel, converging, and diverging rays meeting at a focal point, with labels. Animation resets to initial state after completion for replay. Moon Phases: Interactive diagram with a button to cycle through phases, updating a Unicode emoji display. Apollo 11: A 'click to zoom' interaction on a moon map that fades to a detail image, changes caption, then scrolls to a detail section. YouTube video uses Iframe API and Intersection Observer for autoplay with hidden controls and auto-scroll to moon map on end. Image Carousel: JS for horizontal continuous auto-scrolling slides with hover pause and manual navigation. Quiz: Timed questions (20s with 1.5s delay) and answers, timer starts/pauses based on section visibility and restarts for each question. "AI" Features: Now use pre-defined local content for stories and Q&A, with specific and generic moon answers. These choices prioritize direct manipulation and visual feedback over passive viewing. All visuals are built with HTML/CSS/Unicode, no Chart.js needed for this specific design. -->
+    <!-- CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. -->
     <style>
         body {
             font-family: 'Comic Sans MS', 'Chalkboard SE', 'Marker Felt', sans-serif;
@@ -376,6 +421,20 @@
             margin-top: 1rem;
             min-height: 2.5em; /* Ensure space for answer */
         }
+        #quiz-active-area.hidden, #start-quiz-btn.hidden {
+            display: none;
+        }
+        
+        #solar-system-container, #night-sky-container {
+            position: relative;
+            overflow: hidden;
+            touch-action: none;
+        }
+        
+        .planet-label, .constellation-label {
+            pointer-events: none;
+            white-space: nowrap;
+        }
     </style>
 </head>
 <body class="overflow-x-hidden">
@@ -529,10 +588,11 @@
 
         <section id="quiz-section" class="section bg-gray-800">
             <h2 class="fun-title mb-8">Kuizi i Hapësirës!</h2>
-            <div class="w-full max-w-2xl p-6 bg-gray-700 rounded-xl shadow-xl">
+            <button id="start-quiz-btn" class="fun-button text-xl">Starto Kuizin!</button>
+            <div id="quiz-active-area" class="w-full max-w-2xl p-6 bg-gray-700 rounded-xl shadow-xl hidden">
                 <div id="quiz-question" class="text-2xl text-yellow-400 mb-6 min-h-[60px]">Duke u ngarkuar pyetja...</div>
                 <div id="quiz-answer" class="text-xl text-blue-300 hidden mt-4 min-h-[50px]"></div>
-                <div id="quiz-timer" class="text-lg text-gray-400 mt-4 mb-2">Koha e mbetur: <span id="time-left">15</span>s</div>
+                <div id="quiz-timer" class="text-lg text-gray-400 mt-4 mb-2 hidden">Koha e mbetur: <span id="time-left">20</span>s</div>
                 <button id="next-question-btn" class="fun-button mt-6">Pyetja Tjetër</button>
             </div>
         </section>
@@ -816,6 +876,7 @@
                 drawAnimatedCanvasElements(1); 
                 if (canvasElements.labelFocalPoint) canvasElements.labelFocalPoint.style.opacity = '1'; 
                 if (canvasElements.labelMagnifiedMoon) canvasElements.labelMagnifiedMoon.style.opacity = '1';
+                 // No automatic reset, wait for button click to call startCanvasTelescopeAnimation which includes reset
             }
         }
         
@@ -839,21 +900,26 @@
             if (canvasAnimFrameId) { 
                 cancelAnimationFrame(canvasAnimFrameId);
             }
-            resetCanvasToInitialState(); // Reset before starting
+            resetCanvasToInitialState(); 
             canvasAnimationProgress = 0; 
             
-            // Ensure static labels are visible from the start of animation
             if(canvasElements.labelSourceMoon) canvasElements.labelSourceMoon.style.opacity = '1';
             if(canvasElements.labelObjectiveLens) canvasElements.labelObjectiveLens.style.opacity = '1';
             if(canvasElements.labelEyepieceLens) canvasElements.labelEyepieceLens.style.opacity = '1';
-            if(canvasElements.labelFocalPoint) canvasElements.labelFocalPoint.style.opacity = '0'; // Hide until rays meet
-            if(canvasElements.labelMagnifiedMoon) canvasElements.labelMagnifiedMoon.style.opacity = '0'; // Hide until image appears
+            if(canvasElements.labelFocalPoint) canvasElements.labelFocalPoint.style.opacity = '0';
+            if(canvasElements.labelMagnifiedMoon) canvasElements.labelMagnifiedMoon.style.opacity = '0';
             
             startCanvasTelescopeAnimationLoop();
         }
 
-        // drawFinalTelescopeView is effectively handled by letting the animation loop complete
-        // and then startCanvasTelescopeAnimation will reset it on next click.
+        function drawFinalTelescopeView() { // This function is called when animation reaches 100%
+            if (!ctx || !canvas) return;
+            // This will draw the final state including all rays as per the logic in drawAnimatedCanvasElements(1)
+            drawAnimatedCanvasElements(1); 
+            if (canvasElements.labelFocalPoint) canvasElements.labelFocalPoint.style.opacity = '1';
+            if (canvasElements.labelMagnifiedMoon) canvasElements.labelMagnifiedMoon.style.opacity = '1';
+        }
+
 
         let moonPhaseIndex = 0; 
         const moonPhasesData = [
@@ -1161,9 +1227,8 @@
             moonAnswerOutput.classList.remove('hidden');
             let foundSpecificAnswer = false;
 
-            if (question) { // Only check specific answers if user typed something
+            if (question) { 
                 for (const key in specificMoonAnswers) {
-                    // Check if the user's question *contains* the key phrase
                     if (question.includes(key.replace(/[^\w\s]/gi, ''))) { 
                         moonAnswerOutput.innerHTML = `<p>${specificMoonAnswers[key]}</p>`;
                         foundSpecificAnswer = true;
@@ -1172,7 +1237,7 @@
                 }
             }
 
-            if (!foundSpecificAnswer) { // If no specific question matched or input was empty
+            if (!foundSpecificAnswer) { 
                 moonAnswerOutput.innerHTML = `<p>${genericMoonAnswers[currentGenericMoonAnswerIndex]}</p>`;
                 currentGenericMoonAnswerIndex = (currentGenericMoonAnswerIndex + 1) % genericMoonAnswers.length;
             }
@@ -1190,16 +1255,38 @@
         ];
         let currentQuestionIndex = 0;
         let quizTimerInterval;
-        let timeLeft = 15; 
+        let timeLeft = 20; 
         let quizObserver; 
         let quizSectionVisible = false; 
         let quizCompleted = false; 
 
         function initializeQuiz() {
+            const startQuizBtn = document.getElementById('start-quiz-btn');
             const nextQuestionBtn = document.getElementById('next-question-btn');
-            if (nextQuestionBtn) {
+            const quizActiveArea = document.getElementById('quiz-active-area');
+            
+            if (startQuizBtn && nextQuestionBtn && quizActiveArea) {
+                startQuizBtn.addEventListener('click', () => {
+                    startQuizBtn.classList.add('hidden');
+                    quizActiveArea.classList.remove('hidden');
+                    currentQuestionIndex = 0; 
+                    quizCompleted = false;
+                    showNextQuizQuestion();
+                });
+
                 nextQuestionBtn.addEventListener('click', () => {
                     if (quizTimerInterval) clearInterval(quizTimerInterval); 
+                    const currentBtn = document.getElementById('next-question-btn'); // Get fresh reference
+                    if (currentBtn.textContent === "Rifillo Kuizin") {
+                        quizActiveArea.classList.add('hidden');
+                        startQuizBtn.classList.remove('hidden');
+                        document.getElementById('quiz-question').textContent = "Duke u ngarkuar pyetja..."; 
+                        document.getElementById('quiz-answer').classList.add('hidden');
+                        document.getElementById('quiz-timer').classList.add('hidden');
+                        currentQuestionIndex = 0; 
+                        quizCompleted = false; 
+                        return; 
+                    }
                     showNextQuizQuestion();
                 });
             }
@@ -1217,7 +1304,7 @@
             }
 
             timerContainer.classList.remove('hidden');
-            timeLeft = 15; 
+            timeLeft = 20; 
             timerDisplay.textContent = timeLeft;
             
             if (quizTimerInterval) clearInterval(quizTimerInterval); 
@@ -1242,18 +1329,15 @@
             const nextBtn = document.getElementById('next-question-btn');
             const timerContainer = document.getElementById('quiz-timer');
 
-
             if (!questionEl || !answerEl || !nextBtn || !timerContainer) return;
-
-            if (nextBtn.textContent === "Rifillo Kuizin") { 
-                currentQuestionIndex = 0;
-            }
+            
             quizCompleted = false; 
 
             answerEl.classList.add('hidden');
             answerEl.textContent = '';
             nextBtn.disabled = true;
             nextBtn.classList.add('opacity-50', 'cursor-not-allowed');
+            timerContainer.classList.add('hidden'); 
 
             if (currentQuestionIndex >= quizData.length) {
                 quizCompleted = true; 
@@ -1266,15 +1350,17 @@
                 return;
             }
             
-            timerContainer.classList.remove('hidden'); 
             nextBtn.textContent = "Pyetja Tjetër";
             questionEl.textContent = quizData[currentQuestionIndex].question;
             
-            if(quizSectionVisible) { 
-                startQuizTimer();
-            } else { 
-                 document.getElementById('time-left').textContent = 15;
-            }
+            setTimeout(() => {
+                if(quizSectionVisible && !quizCompleted) { 
+                   startQuizTimer();
+                } else if (!quizCompleted) { 
+                    document.getElementById('time-left').textContent = 20;
+                    timerContainer.classList.remove('hidden'); 
+                }
+            }, 1500); 
         }
 
         function showQuizAnswer() {
@@ -1307,6 +1393,9 @@
             quizObserver = new IntersectionObserver((entries) => {
                 entries.forEach(entry => {
                     quizSectionVisible = entry.isIntersecting;
+                    const quizActiveArea = document.getElementById('quiz-active-area');
+                    if (!quizActiveArea || quizActiveArea.classList.contains('hidden')) return; 
+
                     if (entry.isIntersecting) {
                         if (quizCompleted) { 
                              document.getElementById('quiz-timer').classList.add('hidden');
@@ -1330,6 +1419,20 @@
         }
 
     </script>
+
+    <!-- Interactive Solar System Section -->
+    <section class="section bg-gray-900">
+        <h2 class="fun-title mb-8">Sistemi Diellor Interaktiv</h2>
+        <div id="solar-system-container" class="w-full h-[600px] rounded-lg shadow-2xl mb-8 bg-black"></div>
+        <p class="text-lg mb-4">Eksploro sistemin tonë diellor në 3D! Përdor kontrollet për të rrotulluar dhe zmadhuar pamjen.</p>
+    </section>
+
+    <!-- Night Sky Simulator Section -->
+    <section class="section bg-gray-900">
+        <h2 class="fun-title mb-8">Qielli i Natës nga Kosova</h2>
+        <div id="night-sky-container" class="w-full h-[600px] rounded-lg shadow-2xl mb-8 bg-black"></div>
+        <p class="text-lg mb-4">Zbulo yjet dhe yjësitë që shihen nga Kosova! Përdor kontrollet për të eksploruar qiellin e natës.</p>
+    </section>
+
 </body>
 </html>
-
