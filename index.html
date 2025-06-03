@@ -15,19 +15,10 @@
     }
     </script>
     <script type="module">
-        console.log('Starting module initialization...');
-        
         import * as THREE from 'three';
-        console.log('THREE imported:', THREE);
-        
         import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
-        console.log('OrbitControls imported');
-        
         import { CSS2DRenderer, CSS2DObject } from 'three/examples/jsm/renderers/CSS2DRenderer.js';
-        console.log('CSS2DRenderer imported');
-        
         import { SolarSystem, NightSky } from './js/modules/interactive.js';
-        console.log('SolarSystem and NightSky imported');
         
         window.THREE = THREE;
         
@@ -48,7 +39,7 @@
     </script>
     <!-- Chosen Palette: Cosmic Neutrals (Dark space blue/purple, bright yellow, orange, and light blue accents) -->
     <!-- Application Structure Plan: A single-page, vertical storytelling format. Users scroll through 'chapters' about light, telescopes, the moon, and Apollo 11. A sticky icon-based side-nav allows jumping between sections. This structure is more exploratory and engaging for children than a linear slide-by-slide presentation, turning learning into a guided discovery. Added a final auto-scrolling horizontal image carousel with hover controls. YouTube video now autoplays on scroll with controls hidden and scrolls to moon map on completion. Added a final quiz section with viewport-aware timer for each question, start button, and delayed timer appearance. -->
-    <!-- Visualization & Content Choices: Replaced static presentation ideas with interactive HTML/CSS diagrams. Telescope: Canvas 2D animation showing light path through two lenses, with parallel, converging, and diverging rays meeting at a focal point, with labels. Animation resets to initial state after completion for replay. Moon Phases: Interactive diagram with a button to cycle through phases, updating a Unicode emoji display. Apollo 11: A 'click to zoom' interaction on a moon map that fades to a detail image, changes caption, then scrolls to a detail section. YouTube video uses Iframe API and Intersection Observer for autoplay with hidden controls and auto-scroll to moon map on end. Image Carousel: JS for horizontal continuous auto-scrolling slides with hover pause and manual navigation. Quiz: Timed questions (20s with 1.5s delay) and answers, timer starts/pauses based on section visibility and restarts for each question. "AI" Features: Now use pre-defined local content for stories and Q&A, with specific and generic moon answers. These choices prioritize direct manipulation and visual feedback over passive viewing. All visuals are built with HTML/CSS/Unicode, no Chart.js needed for this specific design. -->
+    <!-- Visualization & Content Choices: Replaced static presentation ideas with interactive HTML/CSS diagrams. Telescope: Canvas 2D animation showing light path through two lenses, with parallel, converging, and diverging rays meeting at a focal point, with labels. Animation resets to initial state after completion for replay. Moon Phases: Interactive diagram with a button to cycle through phases, updating a Unicode emoji display; Sun position and phase angles adjusted for counter-clockwise continuous rotation with Sun on the right, and intermediate phase emojis corrected. Apollo 11: A 'click to zoom' interaction on a moon map that fades to a detail image, changes caption, then scrolls to a detail section. YouTube video uses Iframe API and Intersection Observer for autoplay with hidden controls and auto-scroll to moon map on end. Image Carousel: JS for horizontal continuous auto-scrolling slides with hover pause and manual navigation. Quiz: Timed questions (20s with 1.5s delay) and answers, timer starts/pauses based on section visibility and restarts for each question. "AI" Features: Now use pre-defined local content for stories and Q&A, with specific and generic moon answers. These choices prioritize direct manipulation and visual feedback over passive viewing. All visuals are built with HTML/CSS/Unicode, no Chart.js needed for this specific design. -->
     <!-- CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. -->
     <style>
         body {
@@ -96,7 +87,7 @@
 
         .section {
             min-height: 100vh;
-            padding: 2rem 1rem sm:p-8 md:p-16; 
+            padding: 2rem 1rem;
             display: flex;
             flex-direction: column;
             justify-content: center;
@@ -104,9 +95,19 @@
             text-align: center;
             border-bottom: 2px dashed #4a5568; 
         }
-        .section:last-child {
-            border-bottom: none;
+
+        @media (min-width: 768px) {
+            .section {
+                padding: 2rem;
+            }
         }
+
+        @media (min-width: 1024px) {
+            .section {
+                padding: 4rem;
+            }
+        }
+
         .fun-title {
             font-size: 2.25rem; 
             line-height: 2.5rem;
@@ -386,14 +387,29 @@
             background-color: rgba(45, 55, 72, 0.5); 
             border-radius: 0.75rem;
             max-width: 90%;
-            sm:max-width: 80%;
-            md:max-width: 70%;
-            lg:max-w-3xl;
             text-align: left;
             min-height: 100px;
             border: 1px solid #4a5568;
             margin-left: auto; 
             margin-right: auto;
+        }
+
+        @media (min-width: 640px) {
+            .ai-output {
+                max-width: 80%;
+            }
+        }
+
+        @media (min-width: 768px) {
+            .ai-output {
+                max-width: 70%;
+            }
+        }
+
+        @media (min-width: 1024px) {
+            .ai-output {
+                max-width: 48rem;
+            }
         }
         .ai-input { 
             width: 100%;
@@ -427,6 +443,10 @@
         
         #solar-system-container, #night-sky-container {
             position: relative;
+            width: 100%;
+            height: 600px;
+            background-color: #000;
+            border-radius: 1rem;
             overflow: hidden;
             touch-action: none;
         }
@@ -434,6 +454,39 @@
         .planet-label, .constellation-label {
             pointer-events: none;
             white-space: nowrap;
+            background-color: rgba(0, 0, 0, 0.6);
+            color: white;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-size: 12px;
+        }
+        
+        .control-instructions {
+            position: absolute;
+            bottom: 10px;
+            left: 10px;
+            background-color: rgba(0, 0, 0, 0.7);
+            padding: 10px;
+            border-radius: 5px;
+            color: white;
+            font-size: 14px;
+            z-index: 10;
+            display: none !important; /* Force hide by default */
+            pointer-events: none;
+        }
+        
+        /* Show controls ONLY on desktop */
+        @media (min-width: 768px) and (hover: hover) and (pointer: fine) {
+            .control-instructions {
+                display: block !important;
+            }
+        }
+        
+        /* Force hide on mobile and touch devices */
+        @media (hover: none), (pointer: coarse) {
+            .control-instructions {
+                display: none !important;
+            }
         }
     </style>
 </head>
@@ -512,14 +565,14 @@
                     <div class="absolute inset-0 border-2 border-dashed border-gray-600 rounded-full"></div>
                     <div id="moon-earth" class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-6xl sm:text-7xl md:text-8xl">🌍</div>
                     <div id="moon-orbit" class="absolute inset-0 transition-transform duration-1000">
-                        <div id="moon-object" class="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1/2 text-4xl sm:text-5xl md:text-6xl">🌓</div>
+                        <div id="moon-object" class="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1/2 text-4xl sm:text-5xl md:text-6xl">🌑</div>
                     </div>
                     <div class="absolute -right-16 sm:-right-20 md:-right-32 top-1/2 -translate-y-1/2 text-6xl sm:text-7xl md:text-8xl">☀️</div>
                 </div>
                 <div class="text-center mt-8 md:mt-0">
                     <h3 class="text-2xl sm:text-3xl font-bold text-yellow-300 mb-4">Çfarë shohim nga Toka:</h3>
-                    <div id="moon-phase-display" class="text-7xl sm:text-8xl md:text-9xl mb-4">🌓</div>
-                    <p id="moon-phase-name" class="text-xl sm:text-2xl text-gray-300 font-bold mb-6">Çereku i Parë</p>
+                    <div id="moon-phase-display" class="text-7xl sm:text-8xl md:text-9xl mb-4">🌑</div>
+                    <p id="moon-phase-name" class="text-xl sm:text-2xl text-gray-300 font-bold mb-6">Hëna e Re</p>
                     <button id="phase-btn" class="fun-button">Faza Tjetër</button>
                 </div>
             </div>
@@ -584,6 +637,22 @@
                 <button class="carousel-button prev" onclick="manualCarouselChange(-1)">❮</button>
                 <button class="carousel-button next" onclick="manualCarouselChange(1)">❯</button>
             </div>
+        </section>
+
+        <!-- Interactive Solar System Section -->
+        <section class="section bg-gray-900">
+            <h2 class="fun-title mb-8">Sistemi Diellor Interaktiv</h2>
+            <div id="solar-system-container" class="w-full h-[600px] rounded-lg shadow-2xl mb-8 bg-black"></div>
+            <p class="text-lg mb-4">Eksploro sistemin tonë diellor në 3D! Përdor kontrollet për të rrotulluar dhe zmadhuar pamjen.</p>
+            <p class="text-lg mb-4 md:hidden">Përdor një gisht për të rrotulluar pamjen dhe dy gishta për të zmadhuar/zvogëluar.</p>
+        </section>
+
+        <!-- Night Sky Simulator Section -->
+        <section class="section bg-gray-900">
+            <h2 class="fun-title mb-8">Qielli i Natës nga Kosova</h2>
+            <div id="night-sky-container" class="w-full h-[600px] rounded-lg shadow-2xl mb-8 bg-black"></div>
+            <p class="text-lg mb-4">Zbulo yjet dhe yjësitë që shihen nga Kosova! Përdor kontrollet për të eksploruar qiellin e natës.</p>
+            <p class="text-lg mb-4 md:hidden">Përdor një gisht për të rrotulluar pamjen dhe dy gishta për të zmadhuar/zvogëluar.</p>
         </section>
 
         <section id="quiz-section" class="section bg-gray-800">
@@ -912,28 +981,26 @@
             startCanvasTelescopeAnimationLoop();
         }
 
-        function drawFinalTelescopeView() { // This function is called when animation reaches 100%
-            if (!ctx || !canvas) return;
-            // This will draw the final state including all rays as per the logic in drawAnimatedCanvasElements(1)
-            drawAnimatedCanvasElements(1); 
-            if (canvasElements.labelFocalPoint) canvasElements.labelFocalPoint.style.opacity = '1';
-            if (canvasElements.labelMagnifiedMoon) canvasElements.labelMagnifiedMoon.style.opacity = '1';
-        }
-
+        // drawFinalTelescopeView is effectively handled by letting the animation loop complete
+        // and drawAnimatedCanvasElements(1) being called.
 
         let moonPhaseIndex = 0; 
-        const moonPhasesData = [
-            { emoji: '🌓', name: 'Çereku i Parë', angle: 0 },      
-            { emoji: '🌔', name: 'Gunga Rritëse', angle: 45 },
-            { emoji: '🌕', name: 'Hëna e Plotë', angle: 90 },
-            { emoji: '🌖', name: 'Gunga Zbritëse', angle: 135 },
-            { emoji: '🌗', name: 'Çereku i Fundit', angle: 180 }, 
-            { emoji: '🌘', name: 'Draperi Zbritës', angle: 225 }, 
-            { emoji: '🌑', name: 'Hëna e Re', angle: 270 },
-            { emoji: '🌒', name: 'Draperi Rritës', angle: 315 }
+        const moonPhasesData = [ // Sun on the RIGHT
+            { emoji: '🌑', name: 'Hëna e Re', angle: 90 },    // Moon between Earth and Sun (Sun right) -> Moon at 90 deg for top-down orbit view
+            { emoji: '🌒', name: 'Draperi Rritës', angle: 135 },
+            { emoji: '🌓', name: 'Çereku i Parë', angle: 180 },   // Moon "below" Earth
+            { emoji: '🌔', name: 'Gunga Rritëse', angle: 225 },
+            { emoji: '🌕', name: 'Hëna e Plotë', angle: 270 },  // Earth between Sun and Moon (Sun right) -> Moon at 270 deg
+            { emoji: '🌖', name: 'Gunga Zbritëse', angle: 315 },
+            { emoji: '🌗', name: 'Çereku i Fundit', angle: 0 }, // Moon "above" Earth
+            { emoji: '🌘', name: 'Draperi Zbritës', angle: 45 }
         ];
         
-        let currentVisualOrbitAngle = moonPhasesData[moonPhaseIndex].angle;
+        // Set initial phase to New Moon
+        moonPhaseIndex = moonPhasesData.findIndex(phase => phase.name === 'Hëna e Re');
+        if (moonPhaseIndex === -1) moonPhaseIndex = 0; // Fallback
+        currentVisualOrbitAngle = moonPhasesData[moonPhaseIndex].angle;
+
 
         function updateMoonPhaseDisplay() {
             const phase = moonPhasesData[moonPhaseIndex];
@@ -950,18 +1017,8 @@
         }
 
         function handleNextMoonPhase() {
-            const previousCanonicalAngle = moonPhasesData[moonPhaseIndex].angle;
+            currentVisualOrbitAngle -= 45; // Subtract for counter-clockwise visual rotation of the moon image
             moonPhaseIndex = (moonPhaseIndex + 1) % moonPhasesData.length;
-            const nextCanonicalAngle = moonPhasesData[moonPhaseIndex].angle;
-
-            let angleDifference;
-            if (nextCanonicalAngle < previousCanonicalAngle) { 
-                angleDifference = (360 - previousCanonicalAngle) + nextCanonicalAngle;
-            } else {
-                angleDifference = nextCanonicalAngle - previousCanonicalAngle;
-            }
-            currentVisualOrbitAngle += angleDifference;
-
             updateMoonPhaseDisplay();
         }
 
@@ -1276,7 +1333,7 @@
 
                 nextQuestionBtn.addEventListener('click', () => {
                     if (quizTimerInterval) clearInterval(quizTimerInterval); 
-                    const currentBtn = document.getElementById('next-question-btn'); // Get fresh reference
+                    const currentBtn = document.getElementById('next-question-btn'); 
                     if (currentBtn.textContent === "Rifillo Kuizin") {
                         quizActiveArea.classList.add('hidden');
                         startQuizBtn.classList.remove('hidden');
@@ -1331,8 +1388,6 @@
 
             if (!questionEl || !answerEl || !nextBtn || !timerContainer) return;
             
-            quizCompleted = false; 
-
             answerEl.classList.add('hidden');
             answerEl.textContent = '';
             nextBtn.disabled = true;
@@ -1350,6 +1405,7 @@
                 return;
             }
             
+            quizCompleted = false; // Ensure it's false when showing a new question
             nextBtn.textContent = "Pyetja Tjetër";
             questionEl.textContent = quizData[currentQuestionIndex].question;
             
@@ -1358,7 +1414,8 @@
                    startQuizTimer();
                 } else if (!quizCompleted) { 
                     document.getElementById('time-left').textContent = 20;
-                    timerContainer.classList.remove('hidden'); 
+                    // Only show timer if quiz is active and not completed
+                    if(!quizActiveArea.classList.contains('hidden')) timerContainer.classList.remove('hidden'); 
                 }
             }, 1500); 
         }
@@ -1394,7 +1451,12 @@
                 entries.forEach(entry => {
                     quizSectionVisible = entry.isIntersecting;
                     const quizActiveArea = document.getElementById('quiz-active-area');
-                    if (!quizActiveArea || quizActiveArea.classList.contains('hidden')) return; 
+                    const startQuizBtn = document.getElementById('start-quiz-btn'); 
+                    
+                    if (!quizActiveArea || (quizActiveArea.classList.contains('hidden') && startQuizBtn && !startQuizBtn.classList.contains('hidden'))) {
+                        if (quizTimerInterval) clearInterval(quizTimerInterval); 
+                        return; 
+                    }
 
                     if (entry.isIntersecting) {
                         if (quizCompleted) { 
@@ -1403,7 +1465,7 @@
                         }
                         if(document.getElementById('quiz-question').textContent === "Duke u ngarkuar pyetja..." || 
                            (document.getElementById('next-question-btn').textContent === "Rifillo Kuizin" && currentQuestionIndex === 0) ){
-                            showNextQuizQuestion(); 
+                            // This case is handled by the startQuizBtn click now.
                         } 
                         else if (document.getElementById('quiz-answer').classList.contains('hidden') && !quizCompleted) {
                            startQuizTimer(); 
@@ -1419,20 +1481,5 @@
         }
 
     </script>
-
-    <!-- Interactive Solar System Section -->
-    <section class="section bg-gray-900">
-        <h2 class="fun-title mb-8">Sistemi Diellor Interaktiv</h2>
-        <div id="solar-system-container" class="w-full h-[600px] rounded-lg shadow-2xl mb-8 bg-black"></div>
-        <p class="text-lg mb-4">Eksploro sistemin tonë diellor në 3D! Përdor kontrollet për të rrotulluar dhe zmadhuar pamjen.</p>
-    </section>
-
-    <!-- Night Sky Simulator Section -->
-    <section class="section bg-gray-900">
-        <h2 class="fun-title mb-8">Qielli i Natës nga Kosova</h2>
-        <div id="night-sky-container" class="w-full h-[600px] rounded-lg shadow-2xl mb-8 bg-black"></div>
-        <p class="text-lg mb-4">Zbulo yjet dhe yjësitë që shihen nga Kosova! Përdor kontrollet për të eksploruar qiellin e natës.</p>
-    </section>
-
 </body>
 </html>
