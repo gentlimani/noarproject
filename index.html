@@ -5,17 +5,13 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Drita, Teleskopët dhe Hëna Jonë e Mrekullueshme!</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- Chosen Palette: Cosmic Neutrals (Dark space blue/purple, bright yellow, orange, and light blue accents) -->
-    <!-- Application Structure Plan: A single-page, vertical storytelling format. Users scroll through 'chapters' about light, telescopes, the moon, and Apollo 11. A sticky icon-based side-nav allows jumping between sections. This structure is more exploratory and engaging for children than a linear slide-by-slide presentation, turning learning into a guided discovery. Added a final auto-scrolling horizontal image carousel with hover controls. YouTube video now autoplays on scroll with controls hidden and scrolls to moon map on completion. Added an initial splash screen. -->
-    <!-- Visualization & Content Choices: Replaced static presentation ideas with interactive HTML/CSS diagrams. Telescope: Canvas 2D animation showing light path through two lenses, with parallel, converging, and diverging rays meeting at a focal point, with labels. Animation resets to initial state after completion for replay. Moon Phases: Interactive diagram with a button to cycle through phases, updating a Unicode emoji display. Apollo 11: A 'click to zoom' interaction on a moon map that fades to a detail image, changes caption, then scrolls to a detail section. YouTube video uses Iframe API and Intersection Observer for autoplay with hidden controls and auto-scroll to moon map on end. Image Carousel: JS for horizontal continuous auto-scrolling slides with hover pause and manual navigation. These choices prioritize direct manipulation and visual feedback over passive viewing. All visuals are built with HTML/CSS/Unicode, no Chart.js needed for this specific design. -->
-    <!-- CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. -->
     <style>
         body {
             font-family: 'Comic Sans MS', 'Chalkboard SE', 'Marker Felt', sans-serif;
             background-color: #1a202c; /* Tailwind gray-900 */
             color: #f7fafc; /* Tailwind gray-100 */
             line-height: 1.6;
-            overflow-x: hidden; /* Prevent horizontal scroll on body */
+            overflow-x: hidden; 
         }
         #splash-screen {
             position: fixed;
@@ -23,7 +19,7 @@
             left: 0;
             width: 100vw;
             height: 100vh;
-            background-color: #0c1221; /* Darker space blue for splash */
+            background-color: #0c1221; 
             display: flex;
             flex-direction: column;
             justify-content: center;
@@ -34,20 +30,20 @@
         }
         #splash-screen.hidden {
             opacity: 0;
-            transform: translateY(-100%); /* Optional: slide up effect */
+            transform: translateY(-100%); 
             pointer-events: none;
         }
         #splash-image {
             max-width: 80%;
             max-height: 60vh;
-            border-radius: 50%; /* Make it circular */
-            box-shadow: 0 0 30px #f6e05e, 0 0 60px #f6e05e; /* Yellow glow */
+            border-radius: 50%; 
+            box-shadow: 0 0 30px #f6e05e, 0 0 60px #f6e05e; 
             margin-bottom: 2rem;
             border: 4px solid #f6e05e;
         }
         #main-content {
             opacity: 0;
-            transition: opacity 0.5s ease-in 0.5s; /* Fade in after splash transition */
+            transition: opacity 0.5s ease-in 0.5s; 
         }
         #main-content.visible {
             opacity: 1;
@@ -99,12 +95,18 @@
             transform: translateY(-2px);
             box-shadow: 0 6px 8px rgba(0,0,0,0.3);
         }
+        .fun-button.gemini-btn { 
+            background-color: #7c3aed; 
+        }
+        .fun-button.gemini-btn:hover {
+            background-color: #6d28d9; 
+        }
         .icon-nav {
             position: fixed;
             top: 50%;
             left: 0.5rem; 
             transform: translateY(-50%);
-            display: none; /* Hidden initially, shown by JS after splash */
+            display: none; 
             flex-direction: column;
             gap: 0.75rem; 
             background-color: rgba(45, 55, 72, 0.8); 
@@ -212,12 +214,10 @@
             }
         }
         #moon-map-image {
-            transition: transform 1.5s ease-in-out, opacity 0.8s ease-in-out 0.3s;
+            transition: opacity 0.6s ease-out; 
             transform-origin: 55% 40%; 
         }
-        #moon-map-image.zoomed-in {
-            transform: scale(3); 
-        }
+        
         #sea-of-tranquility-detail {
             position: absolute;
             top: 0;
@@ -235,6 +235,7 @@
         #sea-of-tranquility-detail.visible-zoomed {
             opacity: 1;
             transform: scale(3); 
+            pointer-events: auto; /* Allow interaction if needed when visible */
         }
         .image-caption {
             margin-top: 0.75rem; 
@@ -259,37 +260,35 @@
             display: flex;
         }
         .carousel-slide {
-            flex: 0 0 80%; 
-            width: 80%;
+            flex: 0 0 85vw; 
+            width: 85vw;   
+            max-width: 320px; 
             margin-right: 1rem; 
             box-sizing: border-box;
         }
-         @media (min-width: 640px) { 
-            .carousel-slide {
-                flex: 0 0 60%;
-                width: 60%;
-            }
-        }
-        @media (min-width: 768px) { 
-            .carousel-slide {
-                flex: 0 0 300px; 
-                width: 300px;    
-            }
-        }
-         @media (min-width: 1024px) { 
-            .carousel-slide {
-                flex: 0 0 400px; 
-                width: 400px;
-            }
-        }
         .carousel-slide img {
             width: 100%;
+            height: auto;
             aspect-ratio: 16 / 10; 
-            height: auto; 
             object-fit: cover;
             border-radius: 0.75rem;
             box-shadow: 0 5px 15px rgba(0,0,0,0.2);
             display: block;
+        }
+
+        @media (min-width: 640px) { 
+            .carousel-slide {
+                flex: 0 0 380px; 
+                width: 380px;
+                max-width: none; 
+            }
+        }
+
+        @media (min-width: 1024px) { 
+            .carousel-slide {
+                flex: 0 0 450px; 
+                width: 450px;
+            }
         }
         .carousel-button {
             position: absolute;
@@ -326,6 +325,41 @@
             .carousel-button.next {
                 right: -10px; 
             }
+        }
+        .gemini-output {
+            margin-top: 1.5rem;
+            padding: 1rem;
+            background-color: rgba(45, 55, 72, 0.5); 
+            border-radius: 0.75rem;
+            max-width: 90%;
+            sm:max-width: 80%;
+            md:max-width: 70%;
+            lg:max-w-3xl;
+            text-align: left;
+            min-height: 100px;
+            border: 1px solid #4a5568;
+        }
+        .gemini-input {
+            width: 100%;
+            max-width: 500px;
+            padding: 0.75rem;
+            border-radius: 0.5rem;
+            border: 1px solid #4a5568;
+            background-color: #2d3748; 
+            color: #f7fafc;
+            margin-bottom: 1rem;
+        }
+        .loading-spinner {
+            border: 4px solid rgba(243, 244, 246, 0.1); 
+            border-left-color: #f6e05e; 
+            border-radius: 50%;
+            width: 24px;
+            height: 24px;
+            animation: spin 1s linear infinite;
+            margin: 0.5rem auto;
+        }
+        @keyframes spin {
+            to { transform: rotate(360deg); }
         }
     </style>
 </head>
@@ -377,6 +411,8 @@
                 </div>
             </div>
             <div id="light-fact" class="mt-8 text-xl sm:text-2xl h-12 text-orange-400 font-bold"></div>
+            <button id="generate-light-story-btn" class="fun-button gemini-btn mt-8">✨ Krijo një Tregim për Dritën!</button>
+            <div id="light-story-output" class="gemini-output hidden"></div>
         </section>
 
         <section id="telescope" class="section">
@@ -411,6 +447,11 @@
                     <p id="moon-phase-name" class="text-xl sm:text-2xl text-gray-300 font-bold mb-6">Çereku i Parë</p>
                     <button id="phase-btn" class="fun-button">Faza Tjetër</button>
                 </div>
+            </div>
+            <div class="mt-10 w-full max-w-xl">
+                <input type="text" id="moon-question-input" class="gemini-input" placeholder="Shtyp pyetjen tënde për Hënën këtu...">
+                <button id="ask-moon-btn" class="fun-button gemini-btn">✨ Pyet Hënën Diçka!</button>
+                <div id="moon-answer-output" class="gemini-output hidden mt-4"></div>
             </div>
         </section>
 
@@ -489,10 +530,10 @@
                     setTimeout(() => {
                         splashScreen.style.display = 'none';
                         mainContent.classList.add('visible');
-                        mainNav.classList.add('visible'); // Show nav with main content
-                    }, 1000); // Match CSS transition duration
+                        mainNav.classList.add('visible'); 
+                    }, 1000); 
                 });
-            } else { // If splash screen elements are missing, show main content immediately
+            } else { 
                 if(mainContent) mainContent.classList.add('visible');
                 if(mainNav) mainNav.classList.add('visible');
             }
@@ -515,10 +556,9 @@
             initializeCanvasTelescope();
              window.addEventListener('resize', () => {
                 initializeCanvasTelescope();
-                // Optionally, if an animation was in progress, you might want to restart it or just redraw static
-                if (canvasAnimFrameId) { // If animation was running, restart it
-                    startCanvasTelescopeAnimation();
-                } else { // Otherwise, just draw the static view
+                if (canvasAnimFrameId) { 
+                    startCanvasTelescopeAnimation(); 
+                } else { 
                     drawStaticCanvasElements();
                 }
             });
@@ -531,6 +571,15 @@
             
             updateMoonPhaseDisplay(); 
             initializeCarousel();
+
+            const generateLightStoryBtn = document.getElementById('generate-light-story-btn');
+            if (generateLightStoryBtn) {
+                generateLightStoryBtn.addEventListener('click', generateLightStory);
+            }
+            const askMoonBtn = document.getElementById('ask-moon-btn');
+            if (askMoonBtn) {
+                askMoonBtn.addEventListener('click', askMoon);
+            }
         });
         
         const lightFacts = {
@@ -569,14 +618,12 @@
         function initializeCanvasTelescope() {
             canvas = document.getElementById("telescopeCanvas");
             if (!canvas) {
-                // console.error("Canvas element not found for telescope animation.");
                 return;
             }
             ctx = canvas.getContext("2d");
             
             const container = document.getElementById('telescope-canvas-container');
             if (!container) {
-                 // console.error("Canvas container not found.");
                  return;
             }
             canvas.width = container.clientWidth;
@@ -833,6 +880,7 @@
         }
 
         function zoomToTranquility() {
+            console.log("zoomToTranquility function called!"); 
             const moonMapImage = document.getElementById('moon-map-image');
             const detailImage = document.getElementById('sea-of-tranquility-detail');
             const markerContainer = document.getElementById('tranquility-marker-container');
@@ -840,32 +888,47 @@
             const captionElement = document.getElementById('moon-map-caption');
 
             if (moonMapImage && detailImage && markerContainer && landingSiteSection && captionElement) {
+                console.log("All elements for zoom found.");
                 const originX = '55%'; 
                 const originY = '40%';
+                
                 moonMapImage.style.transformOrigin = `${originX} ${originY}`;
                 detailImage.style.transformOrigin = `${originX} ${originY}`;
+                detailImage.style.pointerEvents = 'auto'; // Make it visible to events if needed
                 
-                moonMapImage.classList.add('zoomed-in');
-                markerContainer.style.opacity = '0';
+                moonMapImage.style.opacity = '0'; 
+                console.log("Moon map opacity set to 0");
+
+                markerContainer.style.opacity = '0'; 
                 if(captionElement) captionElement.textContent = 'Deti i Qetësisë (Pamje e Zmadhuar)';
 
+                detailImage.classList.add('visible-zoomed');
+                console.log("Detail image class 'visible-zoomed' added.");
+
 
                 setTimeout(() => {
-                    moonMapImage.style.opacity = '0';
-                    detailImage.classList.add('visible-zoomed');
-                }, 300); 
+                    if (landingSiteSection) {
+                        landingSiteSection.scrollIntoView({ behavior: 'smooth' });
+                        console.log("Scrolling to landing site.");
+                    }
+                }, 1600); 
 
                 setTimeout(() => {
-                    landingSiteSection.scrollIntoView({ behavior: 'smooth' });
-                }, 2500); 
-
-                setTimeout(() => {
-                    moonMapImage.classList.remove('zoomed-in');
-                    moonMapImage.style.opacity = '1';
+                    moonMapImage.style.opacity = '1'; 
                     detailImage.classList.remove('visible-zoomed');
-                    markerContainer.style.opacity = '1';
+                     detailImage.style.pointerEvents = 'none';
+                    markerContainer.style.opacity = '1'; 
                     if(captionElement) captionElement.textContent = 'Harta e Hënës';
+                    console.log("Zoom elements reset.");
                 }, 4000); 
+            } else {
+                console.error("One or more elements for zoomToTranquility not found:", {
+                    moonMapImage: !!moonMapImage, 
+                    detailImage: !!detailImage, 
+                    markerContainer: !!markerContainer, 
+                    landingSiteSection: !!landingSiteSection, 
+                    captionElement: !!captionElement
+                });
             }
         }
 
@@ -980,7 +1043,8 @@
                     'playsinline': 1,
                     'modestbranding': 1,
                     'rel': 0,
-                    'controls': 0 
+                    'controls': 0,
+                    'origin': window.location.origin 
                 },
                 events: {
                     'onReady': onPlayerReady,
@@ -1029,6 +1093,83 @@
 
             const videoObserver = new IntersectionObserver(observerCallback, observerOptions);
             videoObserver.observe(videoContainer);
+        }
+
+        // Gemini API Functions
+        async function callGeminiAPI(promptText) {
+            const lightStoryOutput = document.getElementById('light-story-output');
+            const moonAnswerOutput = document.getElementById('moon-answer-output');
+            let targetOutputElement;
+
+            if (lightStoryOutput && lightStoryOutput.classList.contains('active-gemini-output')) {
+                targetOutputElement = lightStoryOutput;
+            } else if (moonAnswerOutput && moonAnswerOutput.classList.contains('active-gemini-output')) {
+                targetOutputElement = moonAnswerOutput;
+            }
+
+            if (targetOutputElement) {
+                targetOutputElement.classList.remove('hidden');
+                targetOutputElement.innerHTML = '<div class="loading-spinner"></div><p class="text-center">Duke gjeneruar...</p>';
+            }
+
+            let chatHistory = [{ role: "user", parts: [{ text: promptText }] }];
+            const payload = { contents: chatHistory };
+            const apiKey = ""; 
+            const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`;
+
+            try {
+                const response = await fetch(apiUrl, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+                const result = await response.json();
+
+                if (targetOutputElement) {
+                    if (result.candidates && result.candidates.length > 0 &&
+                        result.candidates[0].content && result.candidates[0].content.parts &&
+                        result.candidates[0].content.parts.length > 0) {
+                        const text = result.candidates[0].content.parts[0].text;
+                        targetOutputElement.innerHTML = `<p>${text.replace(/\n/g, '<br>')}</p>`;
+                    } else {
+                        targetOutputElement.innerHTML = '<p class="text-red-400">Pati një problem gjatë gjenerimit të përgjigjes. Ju lutem provoni përsëri.</p>';
+                        console.error("Gemini API response error:", result);
+                    }
+                }
+            } catch (error) {
+                console.error("Error calling Gemini API:", error);
+                if (targetOutputElement) {
+                    targetOutputElement.innerHTML = '<p class="text-red-400">Pati një problem me lidhjen. Ju lutem provoni përsëri.</p>';
+                }
+            } finally {
+                if (lightStoryOutput) lightStoryOutput.classList.remove('active-gemini-output');
+                if (moonAnswerOutput) moonAnswerOutput.classList.remove('active-gemini-output');
+            }
+        }
+
+        function generateLightStory() {
+            const lightStoryOutput = document.getElementById('light-story-output');
+            if (lightStoryOutput) lightStoryOutput.classList.add('active-gemini-output');
+            const prompt = "Krijo një histori të shkurtër dhe imagjinare për fëmijë (rreth 100-150 fjalë) se si drita udhëton dhe na ndihmon të shohim botën. Përdor një gjuhë të thjeshtë dhe argëtuese.";
+            callGeminiAPI(prompt);
+        }
+
+        function askMoon() {
+            const moonQuestionInput = document.getElementById('moon-question-input');
+            const moonAnswerOutput = document.getElementById('moon-answer-output');
+            if (!moonQuestionInput || !moonAnswerOutput) return;
+
+            const question = moonQuestionInput.value.trim();
+            if (!question) {
+                moonAnswerOutput.classList.remove('hidden');
+                moonAnswerOutput.innerHTML = '<p class="text-yellow-400">Ju lutem shtypni një pyetje për Hënën!</p>';
+                return;
+            }
+            
+            moonAnswerOutput.classList.add('active-gemini-output');
+            const prompt = `Përgjigju kësaj pyetjeje sikur të ishe Hëna duke folur me një fëmijë 8-vjeçar. Pyetja është: "${question}". Përgjigja duhet të jetë e shkurtër, argëtuese dhe e kuptueshme për një fëmijë.`;
+            callGeminiAPI(prompt);
+            moonQuestionInput.value = ''; 
         }
 
     </script>
