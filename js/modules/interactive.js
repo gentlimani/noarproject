@@ -65,13 +65,18 @@ class SolarSystem {
         // Setup keyboard controls
         this.keys = {};
         window.addEventListener('keydown', (e) => {
-            this.keys[e.key] = true;
-            if(['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', ' '].includes(e.key)) {
-                e.preventDefault();
+            // Only prevent default if the event originated from our container
+            if (this.container.contains(e.target) || e.target === document.body) {
+                this.keys[e.key] = true;
+                if(['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', ' '].includes(e.key)) {
+                    e.preventDefault();
+                }
             }
         });
         window.addEventListener('keyup', (e) => {
-            this.keys[e.key] = false;
+            if (this.container.contains(e.target) || e.target === document.body) {
+                this.keys[e.key] = false;
+            }
         });
 
         // Add control instructions
@@ -599,15 +604,18 @@ class NightSky {
     setupKeyboardControls() {
         this.keys = {};
         window.addEventListener('keydown', (e) => {
-            this.keys[e.key] = true;
-            
-            // Prevent page scrolling with arrow keys
-            if(['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', ' '].includes(e.key)) {
-                e.preventDefault();
+            // Only prevent default if the event originated from our container
+            if (this.container.contains(e.target) || e.target === document.body) {
+                this.keys[e.key] = true;
+                if(['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', ' '].includes(e.key)) {
+                    e.preventDefault();
+                }
             }
         });
         window.addEventListener('keyup', (e) => {
-            this.keys[e.key] = false;
+            if (this.container.contains(e.target) || e.target === document.body) {
+                this.keys[e.key] = false;
+            }
         });
     }
 
