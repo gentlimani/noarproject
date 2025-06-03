@@ -9,6 +9,33 @@ console.log('OrbitControls loaded in interactive.js');
 import { CSS2DRenderer, CSS2DObject } from 'three/examples/jsm/renderers/CSS2DRenderer.js';
 console.log('CSS2DRenderer loaded in interactive.js');
 
+// Utility function to check if device is mobile
+function isMobileDevice() {
+    // Check for touch capability
+    const hasTouch = ('ontouchstart' in window) || 
+                     (navigator.maxTouchPoints > 0) || 
+                     (navigator.msMaxTouchPoints > 0);
+    
+    // Check for mobile-specific properties
+    const isMobile = typeof window.orientation !== 'undefined' || 
+                    navigator.userAgent.indexOf('IEMobile') !== -1 ||
+                    window.matchMedia('(hover: none)').matches ||
+                    window.matchMedia('(pointer: coarse)').matches;
+    
+    return hasTouch && isMobile;
+}
+
+// Create viewport observer function
+function createViewportObserver(callback) {
+    return new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+            callback(entry.isIntersecting);
+        });
+    }, {
+        threshold: 0.5
+    });
+}
+
 // Solar System
 class SolarSystem {
     constructor(containerId) {
@@ -18,14 +45,28 @@ class SolarSystem {
             console.error('Container not found:', containerId);
             return;
         }
+        this.isInView = false;
         try {
             this.init();
             this.loadTexturesAndCreateBodies();
+            this.setupViewportObserver();
+            if (!isMobileDevice()) {
+                this.setupKeyboardControls();
+                this.addControlInstructions();
+            }
+            this.setupTouchControls();
         } catch (error) {
             console.error('Error initializing Solar System:', error);
-            // Display error message in container
             this.container.innerHTML = `<div class="p-4 text-red-500">Error initializing Solar System: ${error.message}</div>`;
         }
+    }
+
+    setupViewportObserver() {
+        this.observer = createViewportObserver((isVisible) => {
+            this.isInView = isVisible;
+            console.log('Solar System visibility:', isVisible);
+        });
+        this.observer.observe(this.container);
     }
 
     init() {
@@ -62,40 +103,11 @@ class SolarSystem {
         this.moveSpeed = 1.0;
         this.rotateSpeed = 0.02;
 
-        // Setup keyboard controls
-        this.keys = {};
-        window.addEventListener('keydown', (e) => {
-            // Only prevent default if the event originated from our container
-            if (this.container.contains(e.target) || e.target === document.body) {
-                this.keys[e.key] = true;
-                if(['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', ' '].includes(e.key)) {
-                    e.preventDefault();
-                }
-            }
-        });
-        window.addEventListener('keyup', (e) => {
-            if (this.container.contains(e.target) || e.target === document.body) {
-                this.keys[e.key] = false;
-            }
-        });
-
-        // Add control instructions
-        const instructions = document.createElement('div');
-        instructions.style.position = 'absolute';
-        instructions.style.bottom = '10px';
-        instructions.style.left = '10px';
-        instructions.style.backgroundColor = 'rgba(0, 0, 0, 0.7)';
-        instructions.style.padding = '10px';
-        instructions.style.borderRadius = '5px';
-        instructions.style.color = 'white';
-        instructions.innerHTML = `
-            Kontrollet:<br>
-            W/S - Lëviz para/prapa<br>
-            A/D - Lëviz majtas/djathtas<br>
-            ←/→ - Rrotullo majtas/djathtas<br>
-            ↑/↓ - Shiko lart/poshtë
-        `;
-        this.container.appendChild(instructions);
+        // Setup keyboard controls only if not mobile
+        if (!isMobileDevice()) {
+            this.setupKeyboardControls();
+            this.addControlInstructions();
+        }
 
         // Lighting
         const ambientLight = new THREE.AmbientLight(0x404040);
@@ -464,7 +476,7 @@ class SolarSystem {
     }
 
     updateCamera() {
-        if (!this.camera || !this.keys) return;
+        if (!this.camera || !this.keys || !this.isInView) return;
 
         // Forward/Backward
         if (this.keys['w'] || this.keys['W']) {
@@ -503,6 +515,145 @@ class SolarSystem {
         if (rotation < -Math.PI / 2) this.camera.rotation.x = -Math.PI / 2;
         if (rotation > Math.PI / 2) this.camera.rotation.x = Math.PI / 2;
     }
+
+    setupKeyboardControls() {
+        this.keys = {};
+        
+        const handleKeydown = (e) => {
+            if (this.isInView) {
+                this.keys[e.key] = true;
+                if(['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'w', 'a', 's', 'd', 'W', 'A', 'S', 'D'].includes(e.key)) {
+                    e.preventDefault();
+                }
+            }
+        };
+
+        const handleKeyup = (e) => {
+            if (this.isInView) {
+                this.keys[e.key] = false;
+            }
+        };
+
+        window.addEventListener('keydown', handleKeydown);
+        window.addEventListener('keyup', handleKeyup);
+
+        // Store event listeners for cleanup
+        this.keyboardListeners = {
+            keydown: handleKeydown,
+            keyup: handleKeyup
+        };
+    }
+
+    setupTouchControls() {
+        this.touchData = {
+            isDragging: false,
+            previousTouch: null,
+            pinchStartDistance: 0
+        };
+
+        const handleTouchStart = (e) => {
+            e.preventDefault();
+            this.touchData.isDragging = true;
+            if (e.touches.length === 2) {
+                // Store initial pinch distance
+                this.touchData.pinchStartDistance = Math.hypot(
+                    e.touches[0].pageX - e.touches[1].pageX,
+                    e.touches[0].pageY - e.touches[1].pageY
+                );
+            } else {
+                this.touchData.previousTouch = e.touches[0];
+            }
+        };
+
+        const handleTouchMove = (e) => {
+            e.preventDefault();
+            if (!this.touchData.isDragging) return;
+
+            if (e.touches.length === 2) {
+                // Handle pinch zoom
+                const currentDistance = Math.hypot(
+                    e.touches[0].pageX - e.touches[1].pageX,
+                    e.touches[0].pageY - e.touches[1].pageY
+                );
+                
+                const delta = currentDistance - this.touchData.pinchStartDistance;
+                this.camera.translateZ(-delta * 0.01);
+                this.touchData.pinchStartDistance = currentDistance;
+            } else if (e.touches.length === 1) {
+                const touch = e.touches[0];
+                if (this.touchData.previousTouch) {
+                    // Calculate movement
+                    const deltaX = touch.pageX - this.touchData.previousTouch.pageX;
+                    const deltaY = touch.pageY - this.touchData.previousTouch.pageY;
+
+                    // Rotate camera based on touch movement
+                    this.camera.rotateY(-deltaX * 0.005);
+                    this.camera.rotateX(-deltaY * 0.005);
+
+                    // Limit vertical rotation
+                    const rotation = this.camera.rotation.x;
+                    if (rotation < -Math.PI / 2) this.camera.rotation.x = -Math.PI / 2;
+                    if (rotation > Math.PI / 2) this.camera.rotation.x = Math.PI / 2;
+                }
+                this.touchData.previousTouch = touch;
+            }
+        };
+
+        const handleTouchEnd = (e) => {
+            e.preventDefault();
+            this.touchData.isDragging = false;
+            this.touchData.previousTouch = null;
+        };
+
+        this.container.addEventListener('touchstart', handleTouchStart, { passive: false });
+        this.container.addEventListener('touchmove', handleTouchMove, { passive: false });
+        this.container.addEventListener('touchend', handleTouchEnd, { passive: false });
+
+        // Store event listeners for cleanup
+        this.touchListeners = {
+            touchstart: handleTouchStart,
+            touchmove: handleTouchMove,
+            touchend: handleTouchEnd
+        };
+    }
+
+    addControlInstructions() {
+        // Only add control instructions if not on mobile
+        if (isMobileDevice()) return;
+
+        const instructions = document.createElement('div');
+        instructions.style.position = 'absolute';
+        instructions.style.bottom = '10px';
+        instructions.style.left = '10px';
+        instructions.style.backgroundColor = 'rgba(0, 0, 0, 0.7)';
+        instructions.style.padding = '10px';
+        instructions.style.borderRadius = '5px';
+        instructions.style.color = 'white';
+        instructions.innerHTML = `
+            Kontrollet:<br>
+            W/S - Lëviz para/prapa<br>
+            A/D - Lëviz majtas/djathtas<br>
+            ←/→ - Rrotullo majtas/djathtas<br>
+            ↑/↓ - Shiko lart/poshtë
+        `;
+        this.container.appendChild(instructions);
+    }
+
+    // Add cleanup method
+    cleanup() {
+        if (this.keyboardListeners) {
+            window.removeEventListener('keydown', this.keyboardListeners.keydown);
+            window.removeEventListener('keyup', this.keyboardListeners.keyup);
+        }
+        if (this.touchListeners) {
+            this.container.removeEventListener('touchstart', this.touchListeners.touchstart);
+            this.container.removeEventListener('touchmove', this.touchListeners.touchmove);
+            this.container.removeEventListener('touchend', this.touchListeners.touchend);
+        }
+        if (this.observer) {
+            this.observer.disconnect();
+        }
+    }
 }
 
 // Night Sky Simulator
@@ -514,13 +665,27 @@ class NightSky {
             console.error('Container not found:', containerId);
             return;
         }
+        this.isInView = false;
         try {
             this.init();
-            this.setupKeyboardControls();
+            if (!isMobileDevice()) {
+                this.setupKeyboardControls();
+                this.addControlInstructions();
+            }
+            this.setupTouchControls();
+            this.setupViewportObserver();
         } catch (error) {
             console.error('Error initializing Night Sky:', error);
             this.container.innerHTML = `<div class="p-4 text-red-500">Error initializing Night Sky: ${error.message}</div>`;
         }
+    }
+
+    setupViewportObserver() {
+        this.observer = createViewportObserver((isVisible) => {
+            this.isInView = isVisible;
+            console.log('Night Sky visibility:', isVisible);
+        });
+        this.observer.observe(this.container);
     }
 
     init() {
@@ -555,12 +720,6 @@ class NightSky {
         this.camera.position.z = 100;
         this.camera.rotation.x = THREE.MathUtils.degToRad(41);
 
-        // Disable OrbitControls as we'll use keyboard controls
-        // this.controls = new OrbitControls(this.camera, this.renderer.domElement);
-        // this.controls.enableDamping = true;
-        // this.controls.maxPolarAngle = Math.PI / 1.5;
-        // this.controls.minPolarAngle = Math.PI / 3;
-
         // Movement settings
         this.moveSpeed = 1.0;
         this.rotateSpeed = 0.02;
@@ -581,8 +740,113 @@ class NightSky {
         this.container.addEventListener('wheel', (event) => {
             event.stopPropagation();
         });
+    }
 
-        // Update the instructions to reflect new controls
+    setupKeyboardControls() {
+        this.keys = {};
+        const handleKeydown = (e) => {
+            // Only handle keys if this viewer is in view
+            if (this.isInView && (this.container.contains(e.target) || e.target === document.body)) {
+                this.keys[e.key] = true;
+                if(['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', ' '].includes(e.key)) {
+                    e.preventDefault();
+                }
+            }
+        };
+
+        const handleKeyup = (e) => {
+            if (this.isInView && (this.container.contains(e.target) || e.target === document.body)) {
+                this.keys[e.key] = false;
+            }
+        };
+
+        window.addEventListener('keydown', handleKeydown);
+        window.addEventListener('keyup', handleKeyup);
+
+        // Store event listeners for cleanup
+        this.keyboardListeners = {
+            keydown: handleKeydown,
+            keyup: handleKeyup
+        };
+    }
+
+    setupTouchControls() {
+        this.touchData = {
+            isDragging: false,
+            previousTouch: null,
+            pinchStartDistance: 0
+        };
+
+        const handleTouchStart = (e) => {
+            e.preventDefault();
+            this.touchData.isDragging = true;
+            if (e.touches.length === 2) {
+                // Store initial pinch distance
+                this.touchData.pinchStartDistance = Math.hypot(
+                    e.touches[0].pageX - e.touches[1].pageX,
+                    e.touches[0].pageY - e.touches[1].pageY
+                );
+            } else {
+                this.touchData.previousTouch = e.touches[0];
+            }
+        };
+
+        const handleTouchMove = (e) => {
+            e.preventDefault();
+            if (!this.touchData.isDragging) return;
+
+            if (e.touches.length === 2) {
+                // Handle pinch zoom
+                const currentDistance = Math.hypot(
+                    e.touches[0].pageX - e.touches[1].pageX,
+                    e.touches[0].pageY - e.touches[1].pageY
+                );
+                
+                const delta = currentDistance - this.touchData.pinchStartDistance;
+                this.camera.translateZ(-delta * 0.01);
+                this.touchData.pinchStartDistance = currentDistance;
+            } else if (e.touches.length === 1) {
+                const touch = e.touches[0];
+                if (this.touchData.previousTouch) {
+                    // Calculate movement
+                    const deltaX = touch.pageX - this.touchData.previousTouch.pageX;
+                    const deltaY = touch.pageY - this.touchData.previousTouch.pageY;
+
+                    // Rotate camera based on touch movement
+                    this.camera.rotateY(-deltaX * 0.005);
+                    this.camera.rotateX(-deltaY * 0.005);
+
+                    // Limit vertical rotation
+                    const rotation = this.camera.rotation.x;
+                    if (rotation < -Math.PI / 2) this.camera.rotation.x = -Math.PI / 2;
+                    if (rotation > Math.PI / 2) this.camera.rotation.x = Math.PI / 2;
+                }
+                this.touchData.previousTouch = touch;
+            }
+        };
+
+        const handleTouchEnd = (e) => {
+            e.preventDefault();
+            this.touchData.isDragging = false;
+            this.touchData.previousTouch = null;
+        };
+
+        this.container.addEventListener('touchstart', handleTouchStart, { passive: false });
+        this.container.addEventListener('touchmove', handleTouchMove, { passive: false });
+        this.container.addEventListener('touchend', handleTouchEnd, { passive: false });
+
+        // Store event listeners for cleanup
+        this.touchListeners = {
+            touchstart: handleTouchStart,
+            touchmove: handleTouchMove,
+            touchend: handleTouchEnd
+        };
+    }
+
+    addControlInstructions() {
+        // Only add control instructions if not on mobile
+        if (isMobileDevice()) return;
+
         const instructions = document.createElement('div');
         instructions.style.position = 'absolute';
         instructions.style.bottom = '10px';
@@ -601,22 +865,20 @@ class NightSky {
         this.container.appendChild(instructions);
     }
 
-    setupKeyboardControls() {
-        this.keys = {};
-        window.addEventListener('keydown', (e) => {
-            // Only prevent default if the event originated from our container
-            if (this.container.contains(e.target) || e.target === document.body) {
-                this.keys[e.key] = true;
-                if(['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', ' '].includes(e.key)) {
-                    e.preventDefault();
-                }
-            }
-        });
-        window.addEventListener('keyup', (e) => {
-            if (this.container.contains(e.target) || e.target === document.body) {
-                this.keys[e.key] = false;
-            }
-        });
+    // Add cleanup method
+    cleanup() {
+        if (this.keyboardListeners) {
+            window.removeEventListener('keydown', this.keyboardListeners.keydown);
+            window.removeEventListener('keyup', this.keyboardListeners.keyup);
+        }
+        if (this.touchListeners) {
+            this.container.removeEventListener('touchstart', this.touchListeners.touchstart);
+            this.container.removeEventListener('touchmove', this.touchListeners.touchmove);
+            this.container.removeEventListener('touchend', this.touchListeners.touchend);
+        }
+        if (this.observer) {
+            this.observer.disconnect();
+        }
     }
 
     animate() {
@@ -823,7 +1085,7 @@ class NightSky {
     }
 
     updateCamera() {
-        if (!this.camera || !this.keys) return;
+        if (!this.camera || !this.keys || !this.isInView) return;
 
         // Forward/Backward
         if (this.keys['w'] || this.keys['W']) {
